@@ -1,0 +1,40 @@
+* intro
+  Simple stack language - one stack for every defined type.
+* DSL
+  id = { ... }     --> class with fields def
+  id = :bag ...    --> bag def
+  id = :string ... --> string def
+  id = :map ...    --> map def
+  id = | ...       --> or type def
+
+  See dsl.lisp
+
+* build
+#+name: dsl
+#+begin_src lisp :results output
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ; rm -rf */*.fasl ; rm -rf */*~")
+ (ql:quickload :stack-dsl)
+#+end_src
+
+#+name: dsl
+#+begin_src lisp :results output
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ; rm -rf */*.fasl ; rm -rf */*~")
+ (ql:quickload :stack-dsl/test)
+#+end_src
+
+#+name: dsl
+#+begin_src lisp :results output
+  (stack-dsl::test)
+#+end_src
+
+#+RESULTS: dsl
+: To load "stack-dsl/test":
+:   Load 1 ASDF system:
+:     stack-dsl/test
+: ; Loading "stack-dsl/test"
+: [package loops]...................................
+: [package alexandria.1.0.0]........................
+: [package scanner].................................
+: [package parsing-assembler].......................
+: [package stack-dsl]
+
