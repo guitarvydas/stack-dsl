@@ -1,5 +1,28 @@
 (in-package :stack-dsl)
 
+#+nil(defparameter *use-dsl-parse-only*
+  "
+machineDescriptor = { name initiallyDescriptor states }
+initiallyDescriptor = :bag statement
+states = :bag state
+state = { name events }
+events = :bag event
+event = { onName statements }
+onName = :string
+
+statements = :bag statement
+statement = | sendStatement | callStatement
+sendStatement = { kind='send' expr }
+callStatement = { kind='call' exprmap }
+exprmap = :map expr
+expr = | rawExpr | dollarExpr | callExpr
+dollarExpr = { kind='dollar' }
+callExpr = { kind='function' argmap }
+rawExpr = { kind='raw' rawText }
+rawText = :string
+name = :string
+")
+
 (defparameter *use-dsl*
   "
 machineDescriptor = { name initiallyDescriptor states }
