@@ -49,3 +49,9 @@
 (defclass %typed-bag ()
   ((%type :accessor %type :initform 'bag)
    (%bag :accessor %bag :initform nil)))
+
+(defun %check-existence (class-symbol)
+  (let ((c (find-class class-symbol)))
+    (when (null c)
+      (error "class ~a has not been defined" class-symbol)))
+  T)

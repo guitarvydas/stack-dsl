@@ -1,5 +1,5 @@
 * intro
-  Simple stack language - one stack for every defined type.
+  Simple stack language - two stacks, in the environment, for every defined type.
 * DSL
   id = { ... }     --> class with fields def
   id = :bag ...    --> bag def
@@ -13,12 +13,15 @@
 #+name: dsl
 #+begin_src lisp :results output
  (uiop:run-program "rm -rf ~/.cache/common-lisp ; rm -rf */*.fasl ; rm -rf */*~")
- (ql:quickload :stack-dsl)
+ (ql:quickload :stack-dsl/use)
 #+end_src
 
 #+name: dsl
 #+begin_src lisp :results output
  (uiop:run-program "rm -rf ~/.cache/common-lisp ; rm -rf */*.fasl ; rm -rf */*~")
+#+end_src
+#+name: dsl
+#+begin_src lisp :results output
  (ql:quickload :stack-dsl/test)
 #+end_src
 
@@ -28,13 +31,5 @@
 #+end_src
 
 #+RESULTS: dsl
-: To load "stack-dsl/test":
-:   Load 1 ASDF system:
-:     stack-dsl/test
-: ; Loading "stack-dsl/test"
-: [package loops]...................................
-: [package alexandria.1.0.0]........................
-: [package scanner].................................
-: [package parsing-assembler].......................
-: [package stack-dsl]
 
+  
