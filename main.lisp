@@ -6,9 +6,6 @@
 (defparameter *use-dsl* (alexandria:read-file-into-string 
 		      (asdf:system-relative-pathname :stack-dsl "stack.dsl")))
 
-(defparameter *internal-support* (alexandria:read-file-into-string 
-				  (asdf:system-relative-pathname :stack-dsl "internal-support.lisp")))
-
 
 ;; patterns...
 
