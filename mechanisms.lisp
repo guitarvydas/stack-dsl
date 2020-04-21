@@ -1,5 +1,10 @@
 (in-package :stack-dsl)
 
+
+(defun intern-all (list-of-strings)
+  (let ((r (mapcar #'(lambda(s) (intern (string-upcase s))) list-of-strings)))
+    r))
+
 ;; mechanisms
 (defmethod errorTail ((self stack-dsl-parser)) (error "tail error"))
 (defmethod errorColonTail ((self stack-dsl-parser)) (error "colon tail error"))
@@ -119,7 +124,3 @@ tyname tyname tyname (or-list self))))
 
     
 ;; end mechanisms
-
-(defun intern-all (list-of-strings)
-  (let ((r (mapcar #'(lambda(s) (intern (string-upcase s))) list-of-strings)))
-    r))
