@@ -13,3 +13,7 @@
 	  (with-open-file (f outfile-name :direction :output :if-exists :supersede :if-does-not-exist :create)
 			  (write-string result-string f))
 	  (format nil "file ~a written" outfile-name))))))
+
+(defun transpile-stack (inf outf)
+  (format *standard-output* "~&in stack~%")
+  (transpile inf outf))

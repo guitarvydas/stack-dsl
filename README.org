@@ -12,7 +12,9 @@
 * generate
 #+name: stack-dsl
 #+begin_src lisp :results output
- (uiop:run-program "~/quicklisp/local-projects/rm.sh")
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ;
+ rm -rf ~/quicklisp/local-projects/*.fasl ;
+ rm -rf ~/quicklisp/local/projects/*~")
  (ql:quickload :stack-dsl/generate)
 #+end_src
 
@@ -20,12 +22,6 @@
 #+begin_src lisp :results output
  #| generate stack-dsl.lisp from stack.dsl (+ dsl.pasm) |#
  (stack-dsl::generate)
-#+end_src
-
-#+name: stack-dsl
-#+begin_src lisp :results output
-  #| check that it can be loaded |#
- (ql:quickload :stack-dsl/use)
 #+end_src
 
 #+RESULTS: stack-dsl
@@ -38,28 +34,13 @@
 * use
 #+name: stack-dsl
 #+begin_src lisp :results output
- (uiop:run-program "rm -rf ~/.cache/common-lisp ; rm -rf */*.fasl ; rm -rf */*~")
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ;
+ rm -rf ~/quicklisp/local-projects/*.fasl ;
+ rm -rf ~/quicklisp/local/projects/*~")
 #+end_src
 
 #+name: stack-dsl
 #+begin_src lisp :results output
+  #| check that it can be loaded |#
  (ql:quickload :stack-dsl/use)
 #+end_src
-
-#+name: stack-dsl
-#+begin_src lisp :results output
- #| generate stack-dsl.lisp from stack.dsl (+ dsl.pasm)
-#+end_src
-
-#+RESULTS: stack-dsl
-: To load "stack-dsl/use":
-:   Load 1 ASDF system:
-:     stack-dsl/use
-: ; Loading "stack-dsl/use"
-: [package loops]...................................
-: [package alexandria.1.0.0]........................
-: [package scanner].................................
-: [package parsing-assembler].......................
-: [package stack-dsl]...
-
-  
