@@ -1,7 +1,9 @@
 (in-package :stack-dsl)
 
+(assert nil)
+
 (defparameter *pasm* (alexandria:read-file-into-string
-		      (asdf:system-relative-pathname :stack-dsl "dsl.pasm")))
+		      (asdf:system-relative-pathname :stack-dsl "stack-dsl.pasm")))
 
 (defparameter *use-dsl* (alexandria:read-file-into-string 
 		      (asdf:system-relative-pathname :stack-dsl "stack.dsl")))

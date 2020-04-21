@@ -1,2 +1,4 @@
 (defpackage :stack-dsl
-  (:use :cl :parsing-assembler))
+  (:use :cl :parsing-assembler)
+  (:export
+   #:transpile))

@@ -2,8 +2,16 @@
   :depends-on (:loops :alexandria :parsing-assembler/use)
   :components ((:module "source"
                         :pathname "./"
-                        :components ((:file "package")))))
+                        :components ((:file "package")
+				     (:file "classes")))))
 			
+(defsystem :stack-dsl/generate
+  :depends-on (:stack-dsl)
+  :components ((:module "source"
+                        :pathname "./"
+                        :components ((:static-file "stack-dsl.pasm")
+				     (:file "generate" :depends-on ("stack-dsl.pasm"))))))
+
 (defsystem :stack-dsl/use
   :depends-on (:stack-dsl)
   :around-compile (lambda (next)
@@ -13,29 +21,8 @@
                     (funcall next))
   :components ((:module "source"
                         :pathname "./"
-                        :components (
-				     (:file "classes")
-				     (:file "internal-support" :depends-on ("classes"))
-				     (:file "mechanisms" :depends-on ("classes"))
-				     (:static-file "pasm.pasm")
-				     (:static-file "stack.dsl")
-				     (:file "main" :depends-on (
-								"classes"
-								"pasm.pasm"
-								"stack.dsl"
-								"internal-support"
-								"mechanisms"
-								))))))
-
-(defsystem :stack-dsl/test
-  :depends-on (:stack-dsl/use)
-  :around-compile (lambda (next)
-                    (proclaim '(optimize (debug 3)
-                                         (safety 3)
-                                         (speed 0)))
-                    (funcall next))
-  :components ((:module "source"
-                        :pathname "./"
-                        :components ((:file "test")))))
-    
+                        :components ((:file "internal-support")
+				     (:file "mechanisms")
+				     (:file "transpile")
+				     (:file "stack-dsl" :depends-on ("internal-support" "mechanisms"))))))
 
