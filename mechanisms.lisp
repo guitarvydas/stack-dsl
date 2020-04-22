@@ -58,12 +58,13 @@
     (let ((tyname (savedSymbol self)))
       (pasm:emit-string self "
 (defclass ~a-type (%checked-type) ())
-(defclass ~a-inpu (%typed-stack) ())
-(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
+(defclass ~a-input (%typed-stack) ())
+(defclass ~a-output (%typed-stack) ())
+(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)
   (setf (%type self) '~a))
 
 "
-tyname tyname tyname (or-list self))))
+tyname tyname tyname tyname (or-list self))))
 
 (defmethod fieldClear ((self stack-dsl-parser))
   (setf (field-list self) nil))
@@ -105,12 +106,13 @@ tyname tyname tyname (or-list self))))
 (defmethod environmentEmit ((self stack-dsl-parser))
   (pasm:emit-string self "~%(defclass environment ()~%((%water-mark :accessor %water-mark :initform nil)~%")
   (dolist (tyName (existence-list self))
-    (pasm:emit-string self "(stack-~a :accessor input-~a :initform (make-instance '~a-stack))~%" tyName tyName tyName)
-    (pasm:emit-string self "(stack-~a :accessor output-~a :initform (make-instance '~a-stack))~%" tyName tyName tyName))
+    (pasm:emit-string self "(input-~a :accessor input-~a :initform (make-instance '~a-stack))~%" tyName tyName tyName)
+    (pasm:emit-string self "(output-~a :accessor output-~a :initform (make-instance '~a-stack))~%" tyName tyName tyName))
   (pasm:emit-string self "))~%~^%")
   (pasm:emit-string self "~%(defmethod %memoStacks ((self environment))~%(setf (%water-mark self)~%(list~%")
   (dolist (tyName (existence-list self))
-    (pasm:emit-string self "(stack-~a self)~%" tyName))
+    (pasm:emit-string self "(input-~a self)~%" tyName)
+    (pasm:emit-string self "(output-~a self)~%" tyName))
   (pasm:emit-string self ")))~%~%")
   
   (pasm:emit-string self "(defmethod %memoCheck ((self environment))~%(let ((wm (%water-mark self)))~%(unless (and~%")

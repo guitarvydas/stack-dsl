@@ -1,57 +1,41 @@
 (in-package :stack-dsl)
 
-;; internal support for stack language
-(defclass %checked-type ()
-  ((%type :accessor %type :initform nil)))
 
-(defmethod %check-type ((self %checked-type) item)
-  (unless (eq (%type self) (type-of item))
-    (error (format nil "type ~a does not match ~a" (type-of item) (%type self)))))
+;; stack of typed values
+;; 2 stacks for each type - "input" and "output"
 
-(defclass %typed-stack (%checked-type)
-  ((%stack :accessor %stack :initform nil)))
+;; all items must be %typed-value or %typed-struct or %typed-stack or %bag or %map or %string
+(defclass %typed-value ()
+  (%type :accessor %type :initform :no-type :initarg :type)
+  (val   :accessor val   :initform :no-value))
 
-(defmethod %push ((self %typed-stack) item)
-  (%check-type self item)
-  (cl:push item (%stack self)))
+(defclass %typed-struct ()
+  ()) ;; every field must be of type %typed-value
 
-(defmethod %pop ((self %typed-stack))
-  (when (null (%stack self))
-    (error "stack empty for ~a" self))
-  (cl:pop (%stack self)))
+(defclass %typed-stack ()
+  (%element-type :accessor %element-type :initform :no-type :initarg :type)
+  (%stack :accessor %stack :initform nil))
 
-(defmethod %get ((self %typed-stack))
-  (first (%stack self)))
+(defclass %bag ()
+  (%element-type :accessor %element-type :initform :no-type :initarg :type)
+  (lis :accessor lis :initform nil))
 
-(defun check-field-type (self field-name)
-  (unless (cl:slot-exists-p (first (%stack self)) field-name)
-    (error (format nil "field name ~a is invalid for ~a" field-name (%type self)))))
+(defclass %map ()
+  (%element-type :accessor %element-type :initform :no-type :initarg :type)
+  (lis :accessor lis :initform nil))
 
-(defmethod %get-field ((self %typed-stack) field-name)
-  (when (null (%stack self))
-    (error "stack empty for ~a" self))
-  (check-field-type self field-name)
-  (slot-value field-name (first (%stack self))))
+(defclass %string (%typed-value)
+  (:default-initargs :type 'string))
 
-(defun check-that-data-type-matches-destination-field (self field-name data)
-  ;; tbd
-  (declare (ignore self field-name data))
-  )
+;; applicable to :bag or :map
+;; for :bag, we don't care about order of items
+;; for :map, items must be indexable
+(defgeneric %append (self val))
 
-(defmethod %set-field ((self %typed-stack) field-name data)
-  (when (null (%stack self))
-    (error "stack empty for ~a" self))
-  (check-field-type self field-name)
-  (check-that-data-type-matches-destination-field self field-name data)
-  (setf (slot-value field-name (first (%stack self)))
-	data))
+(defmethod %append ((self %bag) (new-val %typed-value))
+  (%ensure-type new-val (%type self))
+  (setf (lis self) (append (lis self) (list new-val))))
 
-(defclass %typed-bag ()
-  ((%type :accessor %type :initform 'bag)
-   (%bag :accessor %bag :initform nil)))
-
-(defun %check-existence (class-symbol)
-  (let ((c (find-class class-symbol)))
-    (when (null c)
-      (error "class ~a has not been defined" class-symbol)))
-  T)
+(defmethod %append ((self %map) (new-val %typed-value))
+  (%ensure-type new-val (%type self))
+  (setf (lis self) (append (lis self) (list new-val))))

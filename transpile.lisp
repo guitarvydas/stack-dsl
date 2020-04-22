@@ -1,6 +1,8 @@
 (in-package :stack-dsl)
 
-(defun transpile (infile-name outfile-name)
+(declaim (ftype (function (stack-dsl-parser) t) stack-language))
+
+(defun transpile-stack (infile-name outfile-name)
   ;; transpile a stack description in infile
   ;; to an output file of .lisp
 (format *standard-output* "~&in stack-dsl~%")  
@@ -14,6 +16,3 @@
 			  (write-string result-string f))
 	  (format nil "file ~a written" outfile-name))))))
 
-(defun transpile-stack (inf outf)
-  (format *standard-output* "~&in stack~%")
-  (transpile inf outf))

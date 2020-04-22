@@ -21,8 +21,15 @@
                     (funcall next))
   :components ((:module "source"
                         :pathname "./"
-                        :components ((:file "internal-support")
+                        :components ((:file "support")
+				     (:file "macros")
+				     (:file "operations")
 				     (:file "mechanisms")
 				     (:file "transpile")
-				     (:file "stack-dsl" :depends-on ("internal-support" "mechanisms"))))))
+				     (:file "stack-dsl" 
+					    :depends-on ("support"
+							 "macros"
+							 "operations"
+							 "mechanisms"
+							 "transpile"))))))
 
