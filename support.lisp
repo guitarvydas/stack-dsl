@@ -34,3 +34,10 @@
 ;; for :map, items must be indexable
 (defgeneric %append (self val))
 
+(defun %check-existence (class-symbol)
+  (let ((c (find-class class-symbol)))
+    (when (null c)
+      (error "class ~a has not been defined" class-symbol)))
+  T)
+
+

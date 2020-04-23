@@ -25,11 +25,6 @@
 #+end_src
 
 #+RESULTS: stack-dsl
-: To load "stack-dsl/use":
-:   Load 1 ASDF system:
-:     stack-dsl/use
-: ; Loading "stack-dsl/use"
-: 
 
 * use
 #+name: stack-dsl
