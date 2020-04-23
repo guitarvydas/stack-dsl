@@ -55,25 +55,25 @@
   `(%push-empty (,(~in ty) (env self))))
 
 (defmacro ~replace-top (ty1 ty2)
-  `(let ((val (pop (,(~out ty2)))))
+  `(let ((val (pop (,(~out ty2) (env self)))))
      (%check-type val (%type ,ty1))
      (%replace-top ,ty1 ,ty2)
-     (%pop ,ty2)))
+     (%pop (,(~in ty2) (env self)))))
 
 (defmacro ~append (stack1 stack2)
   `(progn
      (%check-appendable-type ,stack1)
      (%check-type (first ,stack2) (%type ,stack1))
      (stack-dsl::%append 
-      (,(~in stack1) (env self)) 
+      (,(~in stack1) (env self))
       (,(~out stack2) (env self)))
-     (%pop (,(~out stack2) (env self)))))
+     (%pop (,~out stack2) (env self))))
 
 (defmacro ~set-field (to field-name from)
   ;; set to.f := from, pop from
-  `(let ((val (%pop (,(~out from) (env self)))))
+  `(let ((val (%pop (,~out from) (env self))))
      (%check-type 
       val 
-      (%type (%get-field ',field-name (,(~in to) (env self)))))
-     (%set-field ',field-name (,(~in to)(env self)) val)))
+      (%type (%get-field ',field-name ,(~in to) (env self))))
+     (%set-field ',field-name ,(~in to)(env self)) val))
 

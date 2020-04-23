@@ -22,13 +22,11 @@
   :components ((:module "source"
                         :pathname "./"
                         :components ((:file "support")
-				     (:file "macros")
 				     (:file "operations")
 				     (:file "mechanisms")
 				     (:file "transpile")
 				     (:file "stack-dsl" 
 					    :depends-on ("support"
-							 "macros"
 							 "operations"
 							 "mechanisms"
 							 "transpile"))))))
