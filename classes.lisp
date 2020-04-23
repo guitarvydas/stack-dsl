@@ -4,7 +4,8 @@
   ((savedSymbol :accessor savedSymbol)
    (or-list :accessor or-list)
    (field-list :accessor field-list)
-   (existence-list :accessor existence-list)))
+   (existence-list :accessor existence-list)
+   (target-package :accessor target-package :initform "STACK-DSL")))
 
 (defmethod initially ((self stack-dsl-parser) token-list)
   (setf (savedSymbol self) nil)
@@ -12,6 +13,3 @@
   (setf (field-list self) nil)
   (setf (existence-list self) nil)
   (call-next-method))
-  
-
-  

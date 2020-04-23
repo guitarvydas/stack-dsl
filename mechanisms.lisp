@@ -95,13 +95,13 @@ tyname tyname tyname tyname (or-list self))))
   (pasm:emit-string self "~%~%;; check forward types~%")
   (setf (existence-list self) (remove-duplicates (intern-all (existence-list self))))
   (dolist (ty (existence-list self))
-    (pasm:emit-string self "(%check-existence '~a-type)~%" ty)))
+    (pasm:emit-string self "(stack-dsl::%check-existence '~a-type)~%" ty)))
 
 (defmethod symbolSave ((self stack-dsl-parser))
   (setf (savedSymbol self) (scanner:token-text (pasm:accepted-token self))))
 
 (defmethod headerEmit ((self stack-dsl-parser))
-  (emit-string self "(in-package :stack-dsl)~%~%"))
+  (emit-string self "(in-package ~s)~%~%" (target-package self)))
 
 (defmethod environmentEmit ((self stack-dsl-parser))
   (pasm:emit-string self "~%(defclass environment ()~%((%water-mark :accessor %water-mark :initform nil)~%")

@@ -25,6 +25,11 @@
 #+end_src
 
 #+RESULTS: stack-dsl
+: To load "stack-dsl/generate":
+:   Load 1 ASDF system:
+:     stack-dsl/generate
+: ; Loading "stack-dsl/generate"
+: [package stack-dsl]
 
 * use
 #+name: stack-dsl

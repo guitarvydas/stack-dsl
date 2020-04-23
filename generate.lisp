@@ -15,7 +15,7 @@
 (defun generate (&optional (given-filename nil))
   (let ((output-filename (or given-filename 
 		     (asdf:system-relative-pathname :stack-dsl *generated-lisp*))))
-    (pasm:pasm-to-file 'random-symbol-from-this-package
+    (pasm:pasm-to-file "STACK-DSL"
 		       (asdf:system-relative-pathname :stack-dsl *pasm-script*)
 		       output-filename)
     (format nil "generated ~a" output-filename)))

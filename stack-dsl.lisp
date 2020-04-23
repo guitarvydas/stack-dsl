@@ -1,4 +1,4 @@
-(in-package :STACK-DSL)
+(in-package "STACK-DSL")
 
 (defmethod stack-language ((p pasm:parser))
   (let ((prev-rule (current-rule p)))     (setf (current-rule p) "stack-language") (pasm::p-into-trace p)
