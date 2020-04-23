@@ -43,39 +43,37 @@
 ;; % is used to prefix support routines.
 ;; (I could have used Common Lisp packages to qualify names instead of prefixes, but I thought that prefixes are less scary and show (visually) my design intentions).
 
-(defmacro ~in(name) `',(intern (string-upcase (format nil "input-~a" name))))
-(defmacro ~out(name) `',(intern (string-upcase (format nil "output-~a" name))))
+(defun ~in(name) `,(intern (string-upcase (format nil "input-~a" name))))
+(defun ~out(name) `,(intern (string-upcase (format nil "output-~a" name))))
 
 (defmacro ~output (ty)
-  (let (($in (~in ty))
-	($out (~out ty)))
   `(progn 
-     (stack-dsl::%output (,$in (env self)) (,$out (env self)))
-     (stack-dsl::%pop (,$out (env self))))))
+     (%output (,(~in ty) (env self)) (,(~out ty) (env self)))
+     (%pop (,(~out ty) (env self)))))
 
 (defmacro ~newscope (ty)
-  `(stack-dsl::%push-empty (,(~in ty) (env self))))
+  `(%push-empty (,(~in ty) (env self))))
 
 (defmacro ~replace-top (ty1 ty2)
   `(let ((val (pop (,(~out ty2)))))
-     (%check-type val (%type ty1))
-     (stack-dsl::%replace-top ty1 ty2)
-     (stack-dsl::%pop ty2)))
+     (%check-type val (%type ,ty1))
+     (%replace-top ,ty1 ,ty2)
+     (%pop ,ty2)))
 
 (defmacro ~append (stack1 stack2)
   `(progn
-     (%check-appendable-type stack1)
-     (%check-type ty2 (%type stack1))
+     (%check-appendable-type ,stack1)
+     (%check-type (first ,stack2) (%type ,stack1))
      (stack-dsl::%append 
       (,(~in stack1) (env self)) 
-      (,(~out ty2) (env self)))
-     (stack-dsl::%pop (,(~out ty2) (env self)))))
+      (,(~out stack2) (env self)))
+     (%pop (,(~out stack2) (env self)))))
 
 (defmacro ~set-field (to field-name from)
   ;; set to.f := from, pop from
-  `(let ((val (stack-dsl::%pop ,(~(out from) (env self)))))
-     (stack-dsl:%check-type 
+  `(let ((val (%pop (,(~out from) (env self)))))
+     (%check-type 
       val 
-      (%type (%get-field ',field-name ,((~in to) (env self)))))
-     (stack-dsl:%set-field ',field-name ,((~in to)(env self)) val)))
+      (%type (%get-field ',field-name (,(~in to) (env self)))))
+     (%set-field ',field-name (,(~in to)(env self)) val)))
 

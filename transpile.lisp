@@ -1,6 +1,6 @@
 (in-package :stack-dsl)
 
-(declaim (ftype (function (stack-dsl-parser) t) stack-language))
+;(declaim (ftype (function (pasm:parser) t) stack-language))
 
 (defun transpile-stack (infile-name outfile-name)
   ;; transpile a stack description in infile
