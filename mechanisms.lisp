@@ -15,7 +15,7 @@
 (defclass ~a-type (stack-dsl::%string) ())
 (defclass ~a-stack (stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%type self) '~a-type))
+  (setf (stack-dsl::%element-type self) '~a-type))
 
 "
   tyname tyname tyname tyname)))
@@ -29,7 +29,7 @@
   (setf (stack-dsl::%type self) '~a))
 (defclass ~a-stack(stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%type self) '~a-type))
+  (setf (stack-dsl::%element-type self) '~a-type))
 
 
 "
@@ -44,7 +44,7 @@
   (setf (stack-dsl::%type self) '~a))
 (defclass ~a-stack (stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%type self) '~a-type))
+  (setf (stack-dsl::%element-type self) '~a-type))
 
 
 "
@@ -84,7 +84,7 @@ tyname tyname tyname tyname (or-list self))))
         (if (null init)
 	    (emit-string self "(~a :accessor ~a)~%" field-name field-name)
 	    (emit-string self "(~a :accessor ~a :initform '~a)" field-name field-name init))))
-    (emit-string self "))~%(defclass ~a-stack (stack-dsl::%typed-stack) ())~%(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%type self) '~a-type))~%~%" tyName tyName tyName)))
+    (emit-string self "))~%(defclass ~a-stack (stack-dsl::%typed-stack) ())~%(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%element-type self) '~a-type))~%~%" tyName tyName tyName)))
 
 (defmethod existenceTypeSave ((self stack-dsl-parser))
   (let ((tyName (scanner:token-text (pasm:accepted-token self))))
