@@ -22,7 +22,7 @@
   [ ?'{' @classWithFields
   | ?'|' @orClass
   | ?':' @colonTail
-  | ?CHARACTER/' @enum
+  | ?CHARACTER/' @enumTail
   | * errorTail
   ]
 
@@ -68,10 +68,10 @@
   | *
   ]
 
-= emun
+= enumTail
   enumPushNew
   @constant
-  {[ ?CHARACTER/' @constant
+  {[ ?'|' '|' @constant
   | * >
   ]}
   enumEmit

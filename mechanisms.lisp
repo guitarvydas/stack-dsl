@@ -148,8 +148,8 @@
 (defclass ~a-type (%enum) () )
 "                tyName)
   (pasm:emit-string self "
-(defmethod initialize-instance :after ((self ~-type))
-  (setf (%value-list self) ~a))
+(defmethod initialize-instance :after ((self ~a-type))
+  (setf (%value-list self) '~a))
 
 "              tyName (enum-list self))))
   
