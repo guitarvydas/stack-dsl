@@ -137,6 +137,7 @@
   (let ((prev-rule (current-rule p)))     (setf (current-rule p) "field") (pasm::p-into-trace p)
 (pasm:input p :SYMBOL)
 (pasm:call-external p #'fieldPushNew)
+(pasm:call-external p #'existenceTypeSave)
 (pasm:call-rule p #'optionalInitializer)
 (setf (current-rule p) prev-rule) (pasm::p-return-trace p)))
 

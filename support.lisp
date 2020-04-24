@@ -9,6 +9,9 @@
   ((%type :accessor %type :initform :no-type :initarg :type)
    (val   :accessor val   :initform :no-value)))
 
+(defclass %or-type ()
+  ((%type-list :accessr %type-list :initform nil :initarg :type-list))
+  
 (defclass %typed-struct ()
   ()) ;; every field must be of type %typed-value
 

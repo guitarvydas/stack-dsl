@@ -59,7 +59,7 @@
 
 = field
   SYMBOL 
-  fieldPushNew 
+  fieldPushNew existenceTypeSave
   @optionalInitializer
 
 = optionalInitializer
