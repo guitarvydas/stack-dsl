@@ -25,6 +25,7 @@
 #+end_src
 
 #+RESULTS: stack-dsl
+: generated /home/tarvydas/quicklisp/local-projects/stack-dsl/stack-dsl.lisp
 
 * use
 #+name: stack-dsl

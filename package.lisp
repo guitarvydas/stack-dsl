@@ -12,6 +12,7 @@
    #:%check-type
    #:%replace-top
    #:%type
+   #:%element-type
    #:%set-field
    #:%get-field
    #:%append))
