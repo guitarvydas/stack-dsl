@@ -10,11 +10,8 @@
    (val   :accessor val   :initform :no-value)))
 
 (defclass %or-type ()
-  ((%type-list :accessr %type-list :initform nil :initarg :type-list))
+  ((%type-list :accessor %type-list :initform nil :initarg :type-list)))
   
-(defclass %typed-struct ()
-  ()) ;; every field must be of type %typed-value
-
 (defclass %typed-stack ()
   ((%element-type :accessor %element-type :initform :no-type :initarg :type)
    (%stack :accessor %stack :initform nil)))
@@ -31,6 +28,9 @@
   ()
   (:default-initargs 
    :type 'string))
+
+(defclass %enum ()
+  ((%value-list :accessor %value-list)))
 
 ;; applicable to :bag or :map
 ;; for :bag, we don't care about order of items

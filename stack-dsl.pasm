@@ -22,6 +22,7 @@
   [ ?'{' @classWithFields
   | ?'|' @orClass
   | ?':' @colonTail
+  | ?CHARACTER/' @enum
   | * errorTail
   ]
 
@@ -66,3 +67,18 @@
   [ ?'=' '=' CHARACTER/' SYMBOL fieldSetInit CHARACTER/'
   | *
   ]
+
+= emun
+  enumPushNew
+  @constant
+  {[ ?CHARACTER/' @constant
+  | * >
+  ]}
+  enumEmit
+
+= constant
+  CHARACTER/'
+  SYMBOL
+  enumPushSymbol
+  CHARACTER/'
+  

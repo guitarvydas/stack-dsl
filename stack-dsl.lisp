@@ -44,6 +44,8 @@
 )
 ((pasm:parser-success? (pasm:lookahead-char? p #\:))(pasm:call-rule p #'colonTail)
 )
+((pasm:parser-success? (pasm:lookahead-char? p #\'))(pasm:call-rule p #'enum)
+)
 ( t (pasm:call-external p #'errorTail)
 )
 )
@@ -153,5 +155,30 @@
 ( t )
 )
 
+(setf (current-rule p) prev-rule) (pasm::p-return-trace p)))
+
+(defmethod emun ((p pasm:parser))
+  (let ((prev-rule (current-rule p)))     (setf (current-rule p) "emun") (pasm::p-into-trace p)
+(pasm:call-external p #'enumPushNew)
+(pasm:call-rule p #'constant)
+(loop
+(cond
+((pasm:parser-success? (pasm:lookahead-char? p #\'))(pasm:call-rule p #'constant)
+)
+( t (return)
+)
+)
+
+)
+
+(pasm:call-external p #'enumEmit)
+(setf (current-rule p) prev-rule) (pasm::p-return-trace p)))
+
+(defmethod constant ((p pasm:parser))
+  (let ((prev-rule (current-rule p)))     (setf (current-rule p) "constant") (pasm::p-into-trace p)
+(pasm:input-char p #\')
+(pasm:input p :SYMBOL)
+(pasm:call-external p #'enumPushSymbol)
+(pasm:input-char p #\')
 (setf (current-rule p) prev-rule) (pasm::p-return-trace p)))
 

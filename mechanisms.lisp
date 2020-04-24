@@ -53,24 +53,17 @@
 
 (defmethod orPushNew ((self stack-dsl-parser)) (setf (or-list self) nil))
 (defmethod orAddSymbol ((self stack-dsl-parser)) 
-  (push 
-   (format nil "~a-type" (scanner:token-text (pasm:accepted-token self))
-	   (or-list self))
-   (defmethod orEmit ((self stack-dsl-parser))))
-  (let ((tyname (savedSymbol self)))
+  (push (scanner:token-text (pasm:accepted-token self)) (or-list self)))
+(defmethod orEmit ((self stack-dsl-parser))
+    (let ((tyname (savedSymbol self)))
       (pasm:emit-string self "
 (defclass ~a-type (stack-dsl::%or-type) ())
-(defclass ~a-input (stack-dsl::%typed-stack) ())
-(defclass ~a-output (stack-dsl::%typed-stack) ())
+(defclass ~a-stack (stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)
   (setf (stack-dsl::%type-list self) '~a))
-(defmethod initialize-instance :after ((self ~a-input) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) '~a-type))
-(defmethod initialize-instance :after ((self ~a-output) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) '~a-type))
 
 "
-tyname tyname tyname tyname (or-list self))))
+			tyname tyname tyname (suffix-with-type (or-list self)))))
 
 (defmethod fieldClear ((self stack-dsl-parser))
   (setf (field-list self) nil))
@@ -81,6 +74,7 @@ tyname tyname tyname tyname (or-list self))))
   (let ((init (scanner:token-text (pasm:accepted-token self))))
     (setf (first (field-list self))
 	  (cons (first (first (field-list self))) init))))
+
 (defmethod fieldEmit ((self stack-dsl-parser))
   (let ((tyName (savedSymbol self)))
     (emit-string self "(defclass ~a-type (stack-dsl::%typed-value)~%(" tyName)
@@ -90,11 +84,18 @@ tyname tyname tyname tyname (or-list self))))
         (if (null init)
 	    (emit-string self "(~a :accessor ~a)~%" field-name field-name)
 	    (emit-string self "(~a :accessor ~a :initform '~a)" field-name field-name init))))
-    (emit-string self"(defmethod iniialize-instance :after ((self ~a-type))")
+    (emit-string self "))
+")
+    (emit-string self "(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)~%" tyName)
     ;; type of each field is the same as name for each field
     (dolist (f (field-list self))
-      (emit-string self "(setf (%type (~a self) '~a-type))~%" f f)
-    (emit-string self "))~%(defclass ~a-stack (stack-dsl::%typed-stack) ())~%(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%element-type self) '~a-type))~%~%" tyName tyName tyName)))
+      (let ((field-name (first f)))
+	(emit-string self "(setf (%type (~a self)) '~a-type)~%" field-name field-name)))
+    (emit-string self ")
+(defclass ~a-stack (stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%element-type self) '~a-type))
+
+" tyName tyName tyName)))
 
 (defmethod existenceTypeSave ((self stack-dsl-parser))
   (let ((tyName (scanner:token-text (pasm:accepted-token self))))
@@ -134,5 +135,29 @@ tyname tyname tyname tyname (or-list self))))
       (incf counter)))
   (pasm:emit-string self "))~%(error \"stack depth incorrect\")))~%"))
 
+
+(defmethod enumPushNew ((self stack-dsl-parser))
+  (setf (enum-list self) nil))
+
+(defmethod enumPushSymbol ((self stack-dsl-parser))
+  (push (scanner:token-text (pasm:accepted-token self)) (enum-list self)))
+
+(defmethod enumEmit ((self stack-dsl-parser))
+  (let ((tyName (savedSymbol self)))
+    (pasm:emit-string self "
+(defclass ~a-type (%enum) () )
+"                tyName)
+  (pasm:emit-string self "
+(defmethod initialize-instance :after ((self ~-type))
+  (setf (%value-list self) ~a))
+
+"              tyName (enum-list self))))
+  
     
 ;; end mechanisms
+
+(defun suffix-with-type (str-list)
+  (mapcar #'(lambda (str)
+	      (format nil "~a-type" str))
+	  str-list))
+	  
