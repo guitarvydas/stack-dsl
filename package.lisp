@@ -4,6 +4,10 @@
    #:transpile-stack
    #:%ensure-existence
 
+   #:%string
+   #:val
+   #:%stack
+   
    #:%ensure-type
    #:%ensure-appendable-type
    #:%output

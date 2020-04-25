@@ -8,32 +8,40 @@
   ;; stack
   ;; no need to type-check, since DSL guarantees that the input and output types
   ;; are the same
-  (let ((v (first input-stack)))
-    (push v output-stack)))
+  (assert (subtypep (type-of input-stack) '%typed-stack))
+  (assert (subtypep (type-of output-stack) '%typed-stack))
+  (let ((v (first (%stack input-stack))))
+    (push v (%stack output-stack))))
 
 (defun %push-empty (stack)
   ;; push some sort of empty indicator onto the stack
-  (push :unbound stack))
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (push :unbound (%stack stack)))
 
 (defun %replace-top (stack other-stack)
-  ;; assign other to top of stack (no push), don't pop either stack
-  (let ((v (first other-stack)))
-    (pop stack)  ;; pop-push is replacement
-    (push v stack)))
+  ;; assign other to top of stack (no push)
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (assert (subtypep (type-of other-stack) '%typed-stack))
+  (let ((v (first (%stack other-stack))))
+    (pop (%stack stack))  ;; pop-push is replacement
+    (push v (%stack stack))))
 
 (defun %pop (stack)
-  (pop stack))
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (pop (%stack stack)))
 
 (defun %top (stack)
-  (first stack))
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (first (%stack stack)))
 
 (defun %type-check-failure (expected val)
   (error (format nil "~%exected type ~a, but got ~a~%" expected val)))
 
 (defun %ensure-appendable-type (stack)
-  (if (eq '%bag (%type stack))
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (if (eq '%bag (type-of stack))
       :ok
-      (if (eq '%map (%type stack))
+      (if (eq '%map (type-of stack))
 	  :ok
 	  (%type-check-failure "appendable" stack)))	  
   ;; fall-through => type checks out
