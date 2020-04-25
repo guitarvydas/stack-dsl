@@ -8,6 +8,7 @@
    #:%ensure-appendable-type
    #:%output
    #:%pop
+   #:%top
    #:%push-empty
    #:%check-type
    #:%replace-top

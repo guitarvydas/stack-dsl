@@ -24,6 +24,9 @@
 (defun %pop (stack)
   (pop stack))
 
+(defun %top (stack)
+  (first stack))
+
 (defun %type-check-failure (expected val)
   (error (format nil "~%exected type ~a, but got ~a~%" expected val)))
 
