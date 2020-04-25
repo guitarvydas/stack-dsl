@@ -27,7 +27,7 @@
 (defun %type-check-failure (expected val)
   (error (format nil "~%exected type ~a, but got ~a~%" expected val)))
 
-(defun %check-appendable-type (stack)
+(defun %ensure-appendable-type (stack)
   (if (eq '%bag (%type stack))
       :ok
       (if (eq '%map (%type stack))
