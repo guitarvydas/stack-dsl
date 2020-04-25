@@ -16,15 +16,16 @@
 (defun %push-empty (stack)
   ;; push some sort of empty indicator onto the stack
   (assert (subtypep (type-of stack) '%typed-stack))
-  (push :unbound (%stack stack)))
+  (let ((eltype (%element-type stack)))
+    (let ((obj (make-instance eltype)))
+      (setf (val obj) :unbound)
+      (push obj (%stack stack)))))
 
-(defun %replace-top (stack other-stack)
+(defun %replace-top (stack v)
   ;; assign other to top of stack (no push)
   (assert (subtypep (type-of stack) '%typed-stack))
-  (assert (subtypep (type-of other-stack) '%typed-stack))
-  (let ((v (first (%stack other-stack))))
-    (pop (%stack stack))  ;; pop-push is replacement
-    (push v (%stack stack))))
+  (pop (%stack stack))  ;; pop-push is replacement
+  (push v (%stack stack)))
 
 (defun %pop (stack)
   (assert (subtypep (type-of stack) '%typed-stack))
