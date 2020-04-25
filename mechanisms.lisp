@@ -153,8 +153,12 @@
 (defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)
   (setf (%value-list self) '~a))
 
-"              tyName (enum-list self))))
-  
+"              tyName (enum-list self))
+  (pasm:emit-string self "
+(defclass ~a-stack (stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
+  (setf (stack-dsl::%element-type self) '~a-type))
+"              tyName tyName tyName)))
     
 ;; end mechanisms
 
