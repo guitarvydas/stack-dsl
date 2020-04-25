@@ -2,10 +2,10 @@
   (:use :cl :parsing-assembler)
   (:export
    #:transpile-stack
-   #:%check-existence
+   #:%ensure-existence
 
-   #:%check-type
-   #:%check-appendable-type
+   #:%ensure-type
+   #:%ensure-appendable-type
    #:%output
    #:%pop
    #:%push-empty
@@ -13,6 +13,7 @@
    #:%replace-top
    #:%type
    #:%element-type
+   #:%field--type
    #:%set-field
    #:%get-field
    #:%append))

@@ -81,6 +81,8 @@
     (dolist (f (field-list self))
       (let ((field-name (first f))
 	    (init (cdr f)))
+	(emit-string self "(%field-type-~a :accessor %field-type-~a :initform '~a)~%"
+		     field-name field-name field-name)
         (if (null init)
 	    (emit-string self "(~a :accessor ~a)~%" field-name field-name)
 	    (emit-string self "(~a :accessor ~a :initform '~a)" field-name field-name init))))
@@ -106,7 +108,7 @@
   (pasm:emit-string self "~%~%;; check forward types~%")
   (setf (existence-list self) (remove-duplicates (intern-all (existence-list self))))
   (dolist (ty (existence-list self))
-    (pasm:emit-string self "(stack-dsl::%check-existence '~a-type)~%" ty)))
+    (pasm:emit-string self "(stack-dsl::%ensure-existence '~a-type)~%" ty)))
 
 (defmethod symbolSave ((self stack-dsl-parser))
   (setf (savedSymbol self) (scanner:token-text (pasm:accepted-token self))))
