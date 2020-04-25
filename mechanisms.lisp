@@ -24,7 +24,7 @@
   (let ((target-name (scanner:token-text (pasm:accepted-token self)))
 	(tyname (savedSymbol self)))
     (pasm:emit-string self "
-(defclass ~a-type (stack-dsl::%typed-bag) ())
+(defclass ~a-type (stack-dsl::%bag) ())
 (defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag
   (setf (stack-dsl::%element-type self) '~a))
 (defclass ~a-stack(stack-dsl::%typed-stack) ())
@@ -39,7 +39,7 @@
   (let ((target-name (scanner:token-text (pasm:accepted-token self)))
 	(tyname (savedSymbol self)))
     (pasm:emit-string self "
-(defclass ~a-type (stack-dsl::%typed-map) ())
+(defclass ~a-type (stack-dsl::%map) ())
 (defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag
   (setf (stack-dsl::%type self) '~a))
 (defclass ~a-stack (stack-dsl::%typed-stack) ())
@@ -88,12 +88,7 @@
 	    (emit-string self "(~a :accessor ~a :initform '~a)" field-name field-name init))))
     (emit-string self "))
 ")
-    (emit-string self "(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)~%" tyName)
-    ;; type of each field is the same as name for each field
-    (dolist (f (field-list self))
-      (let ((field-name (first f)))
-	(emit-string self "(setf (%type (~a self)) '~a-type)~%" field-name field-name)))
-    (emit-string self ")
+    (emit-string self "
 (defclass ~a-stack (stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%element-type self) '~a-type))
 
