@@ -21,35 +21,24 @@
   tyname tyname tyname tyname)))
 
 (defmethod bagEmit ((self stack-dsl-parser))
-  (let ((target-name (scanner:token-text (pasm:accepted-token self)))
+  (let ((element-type-name (scanner:token-text (pasm:accepted-token self)))
 	(tyname (savedSymbol self)))
-    (pasm:emit-string self "
-(defclass ~a-type (stack-dsl::%bag) ())
-(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag
-  (setf (stack-dsl::%element-type self) '~a))
-(defclass ~a-stack(stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) '~a-type))
-
-
-"
- tyname tyname target-name tyname tyname tyname)))
+    (pasm:emit-string self "(defclass ~a-type (stack-dsl::%bag) ())~%" tyname)
+    (pasm:emit-string self "(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag~%" tyName)
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) '~a-type))~%" tyName)
+    (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
+    (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) '~a-type))~%" element-type-name)))
 
 (defmethod mapEmit ((self stack-dsl-parser))
-  (let ((target-name (scanner:token-text (pasm:accepted-token self)))
+  (let ((element-type-name (scanner:token-text (pasm:accepted-token self)))
 	(tyname (savedSymbol self)))
-    (pasm:emit-string self "
-(defclass ~a-type (stack-dsl::%map) ())
-(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag
-  (setf (stack-dsl::%type self) '~a))
-(defclass ~a-stack (stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) '~a-type))
-
-
-"
- tyname tyname target-name tyname tyname tyname)))
-
+    (pasm:emit-string self "(defclass ~a-type (stack-dsl::%map) ())~%" tyname)
+    (pasm:emit-string self "(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag~%" tyName)
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) '~a-type))~%" tyName)
+    (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
+    (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) '~a-type))~%" element-type-name)))
 
 (defmethod orPushNew ((self stack-dsl-parser)) (setf (or-list self) nil))
 (defmethod orAddSymbol ((self stack-dsl-parser)) 
@@ -81,7 +70,7 @@
     (dolist (f (field-list self))
       (let ((field-name (first f))
 	    (init (cdr f)))
-	(emit-string self "(%field-type-~a :accessor %field-type-~a :initform '~a)~%"
+	(emit-string self "(%field-type-~a :accessor %field-type-~a :initform '~a-type)~%"
 		     field-name field-name field-name)
         (if (null init)
 	    (emit-string self "(~a :accessor ~a)~%" field-name field-name)
