@@ -277,10 +277,10 @@
       (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
 
     (let ((var-a (make-instance 'machineDescriptor-type)))
+      (%replace-top input-s var-a)
       (let ((n (make-instance 'name-type)))
 	(setf (%value n) "abc")
 	(%set-field (%top input-s) 'name n)
-	(%replace-top input-s var-a)
 	(%output input-s output-s)
 	(%pop input-s)
 	;; use inspector to examine these values
