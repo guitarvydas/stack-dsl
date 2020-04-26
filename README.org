@@ -19,14 +19,15 @@
 #+end_src
 
 #+name: stack-dsl
-#+begin_src lisp
+#+begin_src lisp :results output
   (load (stack-dsl::path "support.lisp"))
+  (stack-dsl::test-stack-dsl)
   (stack-dsl::test2-stack-dsl)
 #+end_src
 
 * results
 #+RESULTS: stack-dsl
-: test finished
+: T
 
 * generate
 #+name: stack-dsl

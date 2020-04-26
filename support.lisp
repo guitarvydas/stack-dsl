@@ -10,13 +10,13 @@
 ;; all items must be %typed-value or %typed-struct or %typed-stack or %bag or %map or %string
 (defclass %typed-value ()
   ((%type :accessor %type :initform :no-type :initarg :%type)
-   (val   :accessor val   :initform :no-value)))
+   (%value   :accessor %value   :initform :no-value)))
 
 (defclass %or-type (%typed-value)
   ((%type-list :accessor %type-list :initform nil :initarg :type-list)))
   
 (defclass %typed-stack ()
-  ((%element-type :accessor %element-type :initform :no-type :initarg :type)
+  ((%element-type :accessor %element-type :initform :no-type :initarg :element-type)
    (%stack :accessor %stack :initform nil)))
 
 (defclass %bag (%typed-value)
@@ -64,9 +64,9 @@
   (%type-check-failure "internal failure: object must be a %typed-value" obj))
 
 (defmethod %ensure-type ((self %or-type) (obj %typed-value))
-  (if (member (%type obj) (%type self))
+  (if (member (%type obj) (%type-list self))
       :ok
-      (%type-check-failure (%type self) (%type obj))))
+      (%type-check-failure self obj)))
 
 (defmethod %ensure-type ((self %typed-value) (obj %typed-value))
   (if (eq (%type obj) (%type self))
@@ -107,6 +107,8 @@
 (defmethod %ensure-appendable ((self %map))
   t)
 
+
+;;;; test 0 ;;;;
 
 (defun test-stack-dsl ()
   #+nil(%ensure-type 5 6)
@@ -153,10 +155,24 @@
 	  )))
   (let ((bag-a (make-instance '%bag)))
     #+nil(%ensure-appendable 8)
-    (let ((x (make-instance '%typed-value)))
+    (let (#+nil(x (make-instance '%typed-value)))
       #+nil(%ensure-appendable x)
       (%ensure-appendable bag-a)))
+  (let ((or-a (make-instance '%or-type)))
+    #+nil(%ensure-type or-a 5)
+    (let ((a-var (make-instance '%typed-value))
+	  (b-var (make-instance '%typed-value))
+	  (c-var (make-instance '%typed-value)))
+      (setf (%type a-var) 'a)
+      (setf (%type b-var) 'b)
+      (setf (%type c-var) 'c)
+      (setf (%type-list or-a) '(a b))
+      (%ensure-type or-a a-var)
+      (%ensure-type or-a b-var)
+      #+nil(%ensure-type or-a c-var)))
   "test finished")
+
+;;;;;;;;;; end test 0 ;;;;;;;;;;;;;;
 
 (defun assert-is-stack (stack)
   (assert (subtypep (type-of stack) '%typed-stack)))
@@ -167,3 +183,114 @@
   (let ((eltype (%element-type stack)))
     (let ((obj (make-instance eltype)))
       (push obj (%stack stack)))))
+
+(defun %output (input-stack output-stack)
+  ;; "return" the top item on the input-stack by pushing it onto the output
+  ;; stack
+  ;; no need to type-check, since DSL guarantees that the input and output types
+  ;; are the same
+  (assert (subtypep (type-of input-stack) '%typed-stack))
+  (assert (subtypep (type-of output-stack) '%typed-stack))
+  (let ((v (first (%stack input-stack))))
+    (push v (%stack output-stack))))
+
+(defun %pop (stack)
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (pop (%stack stack)))
+
+(defun %replace-top (stack v)
+  ;; assign other to top of stack (no push)
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (setf (first (%stack stack)) v))
+
+(defun %top (stack)
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (if (< (length (%stack stack)) 1)
+      (error "~&stack empty ~s~%" stack))
+  (first (%stack stack)))
+
+(defun %get-field (obj field-name)
+  ;; return obj.field
+  (slot-value obj field-name))
+
+(defun %set-field (obj field-name val)
+  ;; obj.field := val
+  (format *standard-output* "~&set-field ~s ~s ~s~%" obj field-name val)
+  (setf (slot-value obj field-name) val))
+
+;;;;;;;;;; test 2 ;;;;
+
+(defclass machineDescriptor-type (stack-dsl::%typed-value)
+  ((%field-type-pipeline :accessor %field-type-pipeline :initform 'pipeline-type)
+   (pipeline :accessor pipeline)
+   (%field-type-statesBag :accessor %field-type-statesBag :initform 'statesBag-type)
+   (statesBag :accessor statesBag)
+   (%field-type-initiallyDescriptor :accessor %field-type-initiallyDescriptor :initform 'initiallyDescriptor-type)
+   (initiallyDescriptor :accessor initiallyDescriptor)
+   (%field-type-name :accessor %field-type-name :initform 'name-type)
+   (name :accessor name)
+   ))
+
+(defclass machineDescriptor-stack (stack-dsl::%typed-stack) ())
+
+(defmethod initialize-instance :after ((self machineDescriptor-stack) &key &allow-other-keys)
+  (setf (stack-dsl::%element-type self) 'machineDescriptor-type))
+
+
+(defclass name-type (stack-dsl::%string) ())
+(defclass name-stack (stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self name-stack) &key &allow-other-keys)
+  (setf (stack-dsl::%element-type self) 'name-type))
+
+
+
+(defparameter *input-s* nil)
+(defparameter *output-s* nil)
+(defparameter *var* nil)
+
+(defun test2-stack-dsl ()
+  (let ((input-s (make-instance '%typed-stack :element-type 'machineDescriptor-type))
+	(output-s (make-instance '%typed-stack :element-type 'machineDescriptor-type)))
+    (%push-empty input-s)
+    (format nil "length input stack = ~a, output stack = ~a" 
+	    (length (%stack input-s)) (length (%stack output-s)))
+    #+nil(progn
+      (%output input-s output-s)
+      (format nil "length input stack = ~a, output stack = ~a" 
+	      (length (%stack input-s)) (length (%stack output-s))))
+    #+nil(progn
+	   (%output input-s output-s)
+	   (%pop input-s)
+	   (format nil "length input stack = ~a, output stack = ~a" 
+		   (length (%stack input-s)) (length (%stack output-s)))
+	   ;; use inspector to examine these values
+	   (setf *input-s* input-s)
+	   (setf *output-s* output-s))
+    #+nil(let ((var-a (make-instance 'machineDescriptor-type)))
+      (%replace-top input-s var-a)
+      (%output input-s output-s)
+      (%pop input-s)
+      ;; use inspector to examine these values
+      (setf *input-s* input-s)
+      (setf *output-s* output-s)
+      
+      (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
+
+    (let ((var-a (make-instance 'machineDescriptor-type)))
+      (let ((n (make-instance 'name-type)))
+	(setf (%value n) "abc")
+	(%set-field (%top input-s) 'name n)
+	(%replace-top input-s var-a)
+	(%output input-s output-s)
+	(%pop input-s)
+	;; use inspector to examine these values
+	(setf *input-s* input-s)
+	(setf *output-s* output-s)
+	(setf *var* n)
+	
+	(format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
+      )
+    )
+  )
+
+;;;;;;;;;; end test 2 ;;;;
