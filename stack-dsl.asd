@@ -22,7 +22,6 @@
   :components ((:module "source"
                         :pathname "./"
                         :components ((:file "support")
-				     (:file "operations")
 				     (:file "mechanisms")
 				     (:file "transpile")
 				     (:file "stack-dsl" 
