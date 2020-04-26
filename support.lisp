@@ -20,13 +20,13 @@
    (%stack :accessor %stack :initform nil)))
 
 (defclass %bag (%typed-value)
-  ((%element-type :accessor %element-type :initform :no-type :initarg :type)
+  ((%element-type :accessor %element-type :initform :no-type :initarg :element-type)
    (lis :accessor lis :initform nil))
   (:default-initargs
    :%type '%bag))
 
 (defclass %map (%typed-value)
-  ((%element-type :accessor %element-type :initform :no-type :initarg :type)
+  ((%element-type :accessor %element-type :initform :no-type :initarg :element-type)
    (lis :accessor lis :initform nil))
   (:default-initargs
    :%type '%map))
@@ -198,6 +198,10 @@
   (assert (subtypep (type-of stack) '%typed-stack))
   (pop (%stack stack)))
 
+(defun %push (stack v)
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (push v (%stack stack)))
+
 (defun %replace-top (stack v)
   ;; assign other to top of stack (no push)
   (assert (subtypep (type-of stack) '%typed-stack))
@@ -217,6 +221,12 @@
   ;; obj.field := val
   (format *standard-output* "~&set-field ~s ~s ~s~%" obj field-name val)
   (setf (slot-value obj field-name) val))
+
+(defmethod %append ((self %bag) (new-val %typed-value))
+  (setf (lis self) (append (lis self) (list new-val))))
+
+(defmethod %append ((self %map) (new-val %typed-value))
+  (setf (lis self) (append (lis self) (list new-val))))
 
 ;;;;;;;;;; test 2 ;;;;
 
@@ -276,7 +286,7 @@
       
       (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
 
-    (let ((var-a (make-instance 'machineDescriptor-type)))
+    #+nil(let ((var-a (make-instance 'machineDescriptor-type)))
       (%replace-top input-s var-a)
       (let ((n (make-instance 'name-type)))
 	(setf (%value n) "abc")
@@ -286,10 +296,19 @@
 	;; use inspector to examine these values
 	(setf *input-s* input-s)
 	(setf *output-s* output-s)
-	(setf *var* n)
+	(setf *var* (%get-field (%top output-s) 'name))
 	
 	(format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
       )
+    (let ((md (make-instance 'machineDescriptor-type))
+	  (bag-a (make-instance '%bag :element-type 'machineDescriptor-type)))
+      (%replace-top input-s bag-a)
+      (%append (%top input-s) md)
+      (%output input-s output-s)
+      ;; use inspector to examine these values
+      (setf *input-s* input-s)
+      (setf *output-s* output-s)
+      (setf *var* md))
     )
   )
 
