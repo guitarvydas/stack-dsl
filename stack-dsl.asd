@@ -27,7 +27,6 @@
 				     (:file "transpile")
 				     (:file "stack-dsl" 
 					    :depends-on ("support"
-							 "operations"
 							 "mechanisms"
 							 "transpile"))))))
 
