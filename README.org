@@ -9,6 +9,25 @@
 
   See dsl.lisp
 
+* build & test
+#+name: stack-dsl
+#+begin_src lisp :results output
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ;
+ rm -rf ~/quicklisp/local-projects/*.fasl ;
+ rm -rf ~/quicklisp/local/projects/*~")
+ (ql:quickload :stack-dsl)
+#+end_src
+
+#+name: stack-dsl
+#+begin_src lisp
+  (load (stack-dsl::path "support.lisp"))
+  (stack-dsl::test2-stack-dsl)
+#+end_src
+
+* results
+#+RESULTS: stack-dsl
+: test finished
+
 * generate
 #+name: stack-dsl
 #+begin_src lisp :results output
@@ -24,8 +43,6 @@
  (stack-dsl::generate)
 #+end_src
 
-#+RESULTS: stack-dsl
-: generated /home/tarvydas/quicklisp/local-projects/stack-dsl/stack-dsl.lisp
 
 * use
 #+name: stack-dsl

@@ -3,7 +3,8 @@
   :components ((:module "source"
                         :pathname "./"
                         :components ((:file "package")
-				     (:file "classes")))))
+				     (:file "classes")
+				     (:file "path")))))
 			
 (defsystem :stack-dsl/generate
   :depends-on (:stack-dsl)
