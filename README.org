@@ -9,6 +9,43 @@
 
   See dsl.lisp
 
+* usage
+** 1 create a .dsl file in your own directory
+** 2 quickload :stack-dsl/generate (see "* generate", below, for example)
+** 3 generate a .lisp file from the .dsl
+** 4 quickload :stack-dsl/use (see "* use", below)
+* generate
+#+name: stack-dsl
+#+begin_src lisp :results output
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ;
+ rm -rf ~/quicklisp/local-projects/*.fasl ;
+ rm -rf ~/quicklisp/local/projects/*~")
+ (ql:quickload :stack-dsl/generate)
+#+end_src
+
+#+name: stack-dsl
+#+begin_src lisp :results output
+ #| generate stack-dsl.lisp from stack.dsl (+ dsl.pasm) |#
+ (stack-dsl::generate)
+#+end_src
+
+* use
+#+name: stack-dsl
+#+begin_src lisp :results output
+ (uiop:run-program "rm -rf ~/.cache/common-lisp ;
+ rm -rf ~/quicklisp/local-projects/*.fasl ;
+ rm -rf ~/quicklisp/local/projects/*~")
+#+end_src
+
+#+name: stack-dsl
+#+begin_src lisp :results output
+  #| check that it can be loaded |#
+ (ql:quickload :stack-dsl/use)
+#+end_src
+* results
+#+RESULTS: stack-dsl
+
+
 * build & test
 #+name: stack-dsl
 #+begin_src lisp :results output
@@ -25,36 +62,3 @@
   (stack-dsl::test2-stack-dsl)
 #+end_src
 
-* results
-#+RESULTS: stack-dsl
-: T
-
-* generate
-#+name: stack-dsl
-#+begin_src lisp :results output
- (uiop:run-program "rm -rf ~/.cache/common-lisp ;
- rm -rf ~/quicklisp/local-projects/*.fasl ;
- rm -rf ~/quicklisp/local/projects/*~")
- (ql:quickload :stack-dsl/generate)
-#+end_src
-
-#+name: stack-dsl
-#+begin_src lisp :results output
- #| generate stack-dsl.lisp from stack.dsl (+ dsl.pasm) |#
- (stack-dsl::generate)
-#+end_src
-
-
-* use
-#+name: stack-dsl
-#+begin_src lisp :results output
- (uiop:run-program "rm -rf ~/.cache/common-lisp ;
- rm -rf ~/quicklisp/local-projects/*.fasl ;
- rm -rf ~/quicklisp/local/projects/*~")
-#+end_src
-
-#+name: stack-dsl
-#+begin_src lisp :results output
-  #| check that it can be loaded |#
- (ql:quickload :stack-dsl/use)
-#+end_src
