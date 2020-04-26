@@ -9,7 +9,7 @@
   ((%type :accessor %type :initform :no-type :initarg :type)
    (val   :accessor val   :initform :no-value)))
 
-(defclass %or-type ()
+(defclass %or-type (%typed-value)
   ((%type-list :accessor %type-list :initform nil :initarg :type-list)))
   
 (defclass %typed-stack ()
