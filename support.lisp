@@ -5,7 +5,7 @@
 ;; 2 stacks for each type - "input" and "output"
 
 (defun %type-check-failure (expected val)
-  (error (format nil "~%exected type ~a, but got ~a~%" expected val)))
+  (error (format nil "~%expected type ~a, but got ~a~%" expected val)))
 
 ;; all items must be %typed-value or %typed-struct or %typed-stack or %bag or %map or %string
 (defclass %typed-value ()
@@ -57,21 +57,26 @@
 
 ;;;;;;;;;;;; type checking
 
-(defmethod %ensure-type ((self T) obj)
-  (%type-check-failure "internal failure: self must be a %typed-value" obj))
+#+nil(defmethod %ensure-type ((self T) obj)
+  (%type-check-failure "internal failure 1: self must be a %typed-value" obj))
 
-(defmethod %ensure-type ((self %typed-value) (obj T))
-  (%type-check-failure "internal failure: object must be a %typed-value" obj))
+#+nil(defmethod %ensure-type ((self %typed-value) (obj T))
+  (%type-check-failure "internal failure 2: object must be a %typed-value" obj))
 
-(defmethod %ensure-type ((self %or-type) (obj %typed-value))
-  (if (member (%type obj) (%type-list self))
+(defmethod %ensure-type ((self %typed-value) tysym)
+  (if (eq tysym (%type self))
       :ok
-      (%type-check-failure self obj)))
+      (%type-check-failure (%type self) tysym)))
 
 (defmethod %ensure-type ((self %typed-value) (obj %typed-value))
   (if (eq (%type obj) (%type self))
       :ok
       (%type-check-failure (%type self) (%type obj))))
+
+(defmethod %ensure-type ((self %or-type) (obj %typed-value))
+  (if (member (%type obj) (%type-list self))
+      :ok
+      (%type-check-failure self obj)))
 
 (defmethod %ensure-type ((self %bag) (obj %bag))
   (if (eq (%element-type self) (%element-type obj))
@@ -191,8 +196,8 @@
   ;; are the same
   (assert (subtypep (type-of input-stack) '%typed-stack))
   (assert (subtypep (type-of output-stack) '%typed-stack))
-  (let ((v (first (%stack input-stack))))
-    (push v (%stack output-stack))))
+  (let ((v (%top input-stack)))
+    (%push output-stack v)))
 
 (defun %pop (stack)
   (assert (subtypep (type-of stack) '%typed-stack))
@@ -202,16 +207,18 @@
   (assert (subtypep (type-of stack) '%typed-stack))
   (push v (%stack stack)))
 
-(defun %replace-top (stack v)
-  ;; assign other to top of stack (no push)
-  (assert (subtypep (type-of stack) '%typed-stack))
-  (setf (first (%stack stack)) v))
-
 (defun %top (stack)
+  (when (null stack)
+    (error "internal error 3: stack is empty"))
   (assert (subtypep (type-of stack) '%typed-stack))
   (if (< (length (%stack stack)) 1)
       (error "~&stack empty ~s~%" stack))
   (first (%stack stack)))
+
+;; for debug...
+(defun %ntop (stack)
+  (first (%stack stack)))
+;;
 
 (defun %get-field (obj field-name)
   ;; return obj.field
@@ -219,7 +226,6 @@
 
 (defun %set-field (obj field-name val)
   ;; obj.field := val
-  (format *standard-output* "~&set-field ~s ~s ~s~%" obj field-name val)
   (setf (slot-value obj field-name) val))
 
 (defmethod %append ((self %bag) (new-val %typed-value))

@@ -5,7 +5,7 @@
    #:%ensure-existence
 
    #:%string
-   #:val
+   #:%value
    #:%stack
    
    #:%ensure-type
