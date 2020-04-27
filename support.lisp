@@ -20,16 +20,12 @@
    (%stack :accessor %stack :initform nil)))
 
 (defclass %bag (%typed-value)
-  ((%element-type :accessor %element-type :initform :no-type :initarg :element-type)
-   (lis :accessor lis :initform nil))
-  (:default-initargs
-   :%type '%bag))
+  ((%bag-element-type :accessor %bag-element-type :initform :no-type :initarg :bag-element-type)
+   (lis :accessor lis :initform nil)))
 
 (defclass %map (%typed-value)
-  ((%map-element-type :accessor %map-element-type :initform :no-type :initarg :element-type)
-   (ordered-list :accessor ordered-list :initform nil))
-  (:default-initargs
-   :%type '%map))
+  ((%map-element-type :accessor %map-element-type :initform :no-type :initarg :map-element-type)
+   (ordered-list :accessor ordered-list :initform nil)))
 
 (defclass %string (%typed-value)
   ()
@@ -79,7 +75,7 @@
       (%type-check-failure self obj)))
 
 (defmethod %ensure-type ((self %bag) (obj %bag))
-  (if (eq (%element-type self) (%type obj))
+  (if (eq (%bag-element-type self) (%type obj))
       :ok
       (%type-check-failure self obj)))
 
@@ -186,7 +182,7 @@
   ;; push some sort of empty indicator onto the stack
   (assert-is-stack stack)
   (let ((eltype (%element-type stack)))
-    (let ((obj (make-instance eltype)))
+    (let ((obj (make-instance eltype :%type eltype)))
       (push obj (%stack stack))
       stack)))
 
