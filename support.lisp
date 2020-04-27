@@ -4,7 +4,7 @@
 ;; stack of typed values
 ;; 2 stacks for each type - "input" and "output"
 
-(defun %type-check-failure (expected val)
+(defun %type-check-failure (val expected)
   (error (format nil "~%expected type ~a, but got ~a~%" expected val)))
 
 ;; all items must be %typed-value or %typed-struct or %typed-stack or %bag or %map or %string
@@ -26,8 +26,8 @@
    :%type '%bag))
 
 (defclass %map (%typed-value)
-  ((%element-type :accessor %element-type :initform :no-type :initarg :element-type)
-   (lis :accessor lis :initform nil))
+  ((%map-element-type :accessor %map-element-type :initform :no-type :initarg :element-type)
+   (ordered-list :accessor ordered-list :initform nil))
   (:default-initargs
    :%type '%map))
 
@@ -79,12 +79,12 @@
       (%type-check-failure self obj)))
 
 (defmethod %ensure-type ((self %bag) (obj %bag))
-  (if (eq (%element-type self) (%element-type obj))
+  (if (eq (%element-type self) (%type obj))
       :ok
       (%type-check-failure self obj)))
 
 (defmethod %ensure-type ((self %map) (obj %map))
-  (if (eq (%element-type self) (%element-type obj))
+  (if (eq (%map-element-type self) (%type obj))
       :ok
       (%type-check-failure self obj)))
 
@@ -187,7 +187,8 @@
   (assert-is-stack stack)
   (let ((eltype (%element-type stack)))
     (let ((obj (make-instance eltype)))
-      (push obj (%stack stack)))))
+      (push obj (%stack stack))
+      stack)))
 
 (defun %output (input-stack output-stack)
   ;; "return" the top item on the input-stack by pushing it onto the output
@@ -197,15 +198,18 @@
   (assert (subtypep (type-of input-stack) '%typed-stack))
   (assert (subtypep (type-of output-stack) '%typed-stack))
   (let ((v (%top input-stack)))
-    (%push output-stack v)))
+    (%push output-stack v)
+    output-stack))
 
 (defun %pop (stack)
   (assert (subtypep (type-of stack) '%typed-stack))
-  (pop (%stack stack)))
+  (pop (%stack stack))
+  stack)
 
 (defun %push (stack v)
   (assert (subtypep (type-of stack) '%typed-stack))
-  (push v (%stack stack)))
+  (push v (%stack stack))
+  stack)
 
 (defun %top (stack)
   (when (null stack)
@@ -229,10 +233,13 @@
   (setf (slot-value obj field-name) val))
 
 (defmethod %append ((self %bag) (new-val %typed-value))
-  (setf (lis self) (append (lis self) (list new-val))))
+  ;(setf (lis self) (append (lis self) (list new-val)))
+  (push new-val (lis self))
+  self)
 
 (defmethod %append ((self %map) (new-val %typed-value))
-  (setf (lis self) (append (lis self) (list new-val))))
+  (setf (ordered-list self) (append (ordered-list self) (list new-val)))
+  self)
 
 ;;;;;;;;;; test 2 ;;;;
 

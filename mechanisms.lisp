@@ -34,7 +34,7 @@
   (let ((element-type-name (scanner:token-text (pasm:accepted-token self)))
 	(tyname (savedSymbol self)))
     (pasm:emit-string self "(defclass ~a-type (stack-dsl::%map) ())~%" tyname)
-    (pasm:emit-string self "(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in bag~%" tyName)
+    (pasm:emit-string self "(defmethod initialize-instance :after ((self ~a-type) &key &allow-other-keys)  ;; type for items in map~%" tyName)
     (pasm:emit-string self "(setf (stack-dsl::%element-type self) '~a-type))~%" tyName)
     (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
     (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
