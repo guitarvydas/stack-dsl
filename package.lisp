@@ -9,6 +9,7 @@
    #:%stack
    
    #:%ensure-type
+   #:%ensure-field-type
    #:%ensure-appendable-type
    #:%output
    #:%pop

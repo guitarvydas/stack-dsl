@@ -1,5 +1,5 @@
 (defsystem :stack-dsl
-  :depends-on (:loops :alexandria :parsing-assembler/use)
+  :depends-on (:loops :alexandria :cl-json :parsing-assembler/use)
   :components ((:module "source"
                         :pathname "./"
                         :components ((:file "package")

@@ -4,15 +4,19 @@
 ;; stack of typed values
 ;; 2 stacks for each type - "input" and "output"
 
-(defun %type-check-failure (val expected)
+(defun %type-check-failure (expected val)
   (error (format nil "~%expected type ~a, but got ~a~%" expected val)))
+
+(defun %type-check-failure-format (fmtstr &rest args)
+  (let ((msg (apply 'format nil fmtstr args)))
+    (error msg)))
 
 ;; all items must be %typed-value or %typed-struct or %typed-stack or %bag or %map or %string
 (defclass %typed-value ()
   ((%type :accessor %type :initform :no-type :initarg :%type)
    (%value   :accessor %value   :initform :no-value)))
 
-(defclass %or-type (%typed-value)
+(defclass %compound-type (%typed-value)
   ((%type-list :accessor %type-list :initform nil :initarg :type-list)))
   
 (defclass %typed-stack ()
@@ -30,7 +34,7 @@
 (defclass %string (%typed-value)
   ()
   (:default-initargs 
-   :%type 'string))
+   :%type "STRING-TYPE"))
 
 (defclass %enum (%typed-value)
   ((%value-list :accessor %value-list))
@@ -51,129 +55,218 @@
   T)
 
 
-;;;;;;;;;;;; type checking
+;;;;;;;;;;;; type checking - type descriptors
 
-#+nil(defmethod %ensure-type ((self T) obj)
-  (%type-check-failure "internal failure 1: self must be a %typed-value" obj))
 
-#+nil(defmethod %ensure-type ((self %typed-value) (obj T))
-  (%type-check-failure "internal failure 2: object must be a %typed-value" obj))
+(defparameter *type-table* nil)  ;; global only for debug
+(defparameter *type-hash* nil)   ;; global only for debug
 
-(defmethod %ensure-type ((self %typed-value) tysym)
-  (if (eq tysym (%type self))
-      :ok
-      (%type-check-failure (%type self) tysym)))
+(defun make-types-from-string-list (str-list)
+  (mapcar #'make-type-from-string str-list))
 
-(defmethod %ensure-type ((self %typed-value) (obj %typed-value))
-  (if (eq (%type obj) (%type self))
-      :ok
-      (%type-check-failure (%type self) (%type obj))))
+(defun make-type-from-string (s)
+  s)
 
-(defmethod %ensure-type ((self %or-type) (obj %typed-value))
-  (if (member (%type obj) (%type-list self))
-      :ok
-      (%type-check-failure self obj)))
 
-(defmethod %ensure-type ((self %bag) (obj %bag))
-  (if (eq (%bag-element-type self) (%type obj))
-      :ok
-      (%type-check-failure self obj)))
+(defclass type-descriptor () 
+  ((descriptor-alist :accessor descriptor-alist :initarg :descriptor-alist)))
 
-(defmethod %ensure-type ((self %map) (obj %map))
-  (if (eq (%map-element-type self) (%type obj))
-      :ok
-      (%type-check-failure self obj)))
+(defclass string-descriptor (type-descriptor)
+  ())
+(defclass map-descriptor (type-descriptor)
+  ((element-type :accessor element-type :initarg :element-type)))
+(defclass bag-descriptor (type-descriptor)
+  ((element-type :accessor element-type :initarg :element-type)))
+(defclass enum-descriptor (type-descriptor)
+  ((value-list :accessor value-list :initform nil :initarg :value-list)))
+(defclass compound-descriptor (type-descriptor)
+  ((types :accessor types :initform nil :initarg :types)))
+(defclass structure-descriptor (type-descriptor)
+  ((fields :accessor fields :initform nil :initarg :fields)))
 
-(defmethod %ensure-type ((self %enum) (obj %typed-value))
-  (if (eq 'enum (%type obj))
-      (if (= (length (%value-list self)) (length (%value-list obj)))
-	  (if (cl:every #'(lambda (x) (member x (%value-list self))) (%value-list obj))
-	      :ok
-	      (%type-check-failure "enum values must match" obj))
-	  (%type-check-failure self obj))
-      (%type-check-failure "must be an enum" obj))
+(defun create-string-descriptor (adesc)
+  (make-instance 'string-descriptor :descriptor-alist adesc))
+
+(defun create-map-descriptor (adesc)
+  (let ((eltype (intern (string-upcase (cdr (assoc :element-type adesc))) "KEYWORD")))
+    (make-instance 'map-descriptor 
+		   :descriptor-alist adesc
+		   :element-type eltype)))
+  
+(defun create-bag-descriptor (adesc)
+  (let ((eltype (intern (string-upcase (cdr (assoc :element-type adesc))) "KEYWORD")))
+    (make-instance 'map-descriptor 
+		   :descriptor-alist adesc
+		   :element-type eltype)))
+  
+(defun create-enum-descriptor (adesc)
+  (let ((values-string-list (cdr (assoc :value-list adesc))))
+    (let ((values-keyword-list nil))
+      (dolist (str values-string-list)
+	(push (intern (string-upcase str) "KEYWORD")
+	      values-keyword-list))
+      (make-instance 'enum-descriptor
+		     :descriptor-alist adesc
+		     :value-list values-keyword-list))))
+
+(defun create-compound-descriptor (adesc)
+  (let ((string-list (cdr (assoc :types adesc))))
+    (let ((types-list (make-types-from-string-list string-list)))
+      (make-instance 'compound-descriptor
+		     :descriptor-alist adesc
+		     :types types-list))))
+
+(defun create-structure-descriptor (adesc)
+  (let ((alist-name-type-pairs (cdr (assoc :fields adesc))))
+    ;; (( (:FIELD-NAME . "exprkind") (:FIELD-TYPE . "exprkind") )...)
+    ;; for this DSL, we need only the types, so we cheat...
+    (let ((type-list (mapcar #'(lambda (pair)
+				 (make-type-from-string (cdr (assoc :field-type pair))))
+			     alist-name-type-pairs)))
+	(make-instance 'structure-descriptor
+		       :descriptor-alist adesc
+		       :fields type-list))))
+  
+(defun initialize-type-hash (type-hash type-table)
+  (dolist (a type-table)
+    (let ((tyname (make-type-from-string (cdr (assoc :name a))))
+	  (adesc (cdr (assoc :descriptor a))))
+      (let ((kind-sym (intern (string-upcase (cdr (assoc :kind adesc))) "KEYWORD")))
+	(let ((desc
+	       (ecase kind-sym
+		 (:string (create-string-descriptor adesc))
+		 (:enum (create-enum-descriptor adesc))
+		 (:structure (create-structure-descriptor adesc))
+		 (:compound (create-compound-descriptor adesc))
+		 (:map (create-map-descriptor adesc))
+		 (:bag (create-bag-descriptor adesc)))))
+	  (setf (gethash tyname type-hash) desc)))))
+  type-hash)
+
+
+(defmethod deep-type-equal ((self T) (obj T))
+  nil)
+(defmethod deep-type-equal ((self string-descriptor) (obj string-descriptor))
   T)
+(defmethod deep-type-equal ((self map-descriptor) (obj map-descriptor))
+  (eq (element-type self) (element-type obj)))
+(defmethod deep-type-equal ((self bag-descriptor) (obj bag-descriptor))
+  (eq (element-type self) (element-type obj)))
+(defmethod deep-type-equal ((self enum-descriptor) (obj enum-descriptor))
+  (let ((self-values (values self))
+	(obj-values (values obj)))
+    (and (= (length self-values) (length obj-values))
+	 (every #'(lambda (x) (string-member x obj-values)) self-values))))
+(defmethod deep-type-equal ((self compound-descriptor) (obj compound-descriptor))
+  (let ((self-types (types self))
+	(obj-types (types obj)))
+    (and (= (length self-types) (length obj-types))
+	 (every #'(lambda (x) (string-member x obj-types)) self-types))))
+(defmethod deep-type-equal ((self structure-descriptor) (obj structure-descriptor))
+  (let ((self-fields (fields self))
+	(obj-fields (fields obj)))
+    (and (= (length self-fields) (length obj-fields))
+	 (every #'(lambda (x) (string-member x obj-fields)) self-fields))))
+
+(defmethod shallow-type-equal ((self T) (obj T))
+  nil)
+(defmethod shallow-type-equal ((self %typed-value) (obj %typed-value))
+  (string= (%type self) (%type obj)))
+
+(defun string-member (s lis)
+  ;; does this need to be more efficient?  (for small dsl's, we don't really care)
+  (dolist (str lis)
+    (when (string= str s)
+      (return-from string-member T)))
+  nil)
+
+(defun get-type (name)
+  (multiple-value-bind (descriptor success)
+      (gethash name *type-hash*)
+    (if (not success)
+	nil
+	descriptor)))
+
+(defun get-type-or-fail (name)
+  (multiple-value-bind (descriptor success)
+      (gethash name *type-hash*)
+    (if (null success)
+	(%type-check-failure-format "type ~a is not defined" name)
+	(if (null descriptor)
+	    (%type-check-failure "type ~a cannot not found" name)
+	    descriptor))))
+
+(defun find-field-type (pairs field-name)
+  (dolist (p pairs) ;; ((:field-name . "exprKind") (:field-type . "exprKind"))
+    (let ((name (cdr (assoc :field-name p)))
+	  (ty   (cdr (assoc :field-type p))))
+      (assert (stringp name))
+      (assert (stringp ty))
+      (when (string= field-name name)
+	(return-from find-field-type ty))))
+  nil)
+
+(defmethod get-field-type (type-desc field-name)
+  nil)
+(defmethod get-field-type ((type-desc structure-descriptor) field-name)
+  (let ((field-pairs (cdr (assoc :fields (fields type-desc)))))
+    (if (null field-pairs)
+	(%type-check-failure-format "internal error get-field-type ~s ~s"
+				  type-desc field-name)
+	(let ((field-type (find-field-type field-pairs field-name)))
+	  (if (null field-type)
+	      nil
+	      field-type)))))
+  
+(defun get-field-type-or-fail (type-name field-name)
+  (let ((main-desc (get-type-or-fail type-name)))
+    (let ((field-type-desc (get-field-type main-desc field-name)))
+      (if field-type-desc
+	  field-type-desc
+	  (%type-check-failure-format "type ~a does not have a field ~a" type-name field-name)))))
+
+;; type checking
+
+(defun read-json-types (filename)
+  (alexandria:read-file-into-string filename))
+
+(defun types-as-alist (filename)
+  (let ((str (read-json-types filename)))
+    (with-input-from-string (s str)
+      (json:decode-json s))))
+
+(defun initialize-types (filename)
+  (setf *type-table* (types-as-alist filename))
+  (setf *type-hash* (make-hash-table :test 'equal))
+  (initialize-type-hash *type-hash* *type-table*))
+ 
+    
+(defmethod %ensure-type (expected-type (obj T))
+  (%type-check-failure-format "expected type must be a type descriptor, object must be  %typed-value"))
+
+(defmethod %ensure-type (expected-type (obj %typed-value))
+  ;; return T if type checks out, else %type-check-failure
+  (let ((expected-type-desc (get-type-or-fail expected-type)))
+    (let ((obj-desc (get-type-or-fail (%type obj))))
+      (shallow-type-equal expected-type-desc obj-desc))))
+
+(defmethod %ensure-field-type ((self T) field-name (obj T))
+  (%type-check-failure (format nil "~a has no field called ~a" self field-name) obj))
+
+(defmethod %ensure-field-type (expected-type field-name (obj %typed-value))
+  (let ((expected-type-desc (get-type-or-fail expected-type)))
+    (unless expected-type-desc 
+      (%type-check-failure "not a structure" expected-type))
+    (let ((obj-type-desc (get-type-or-fail (%type obj))))
+      (unless obj-type-desc 
+	(%type-check-failure "not a structure" obj))
+      (let ((field-type-desc (get-field-type-or-fail expected-type field-name)))
+	(shallow-type-equal field-type-desc obj-type-desc)))))
+
+;;;;;;;;;;;; end type checking
 
 
-;; only :bag and :map are appendable...
-(defmethod %ensure-appendable ((self T))
-  (%type-check-failure "appendable %typed-value (:bag or :map)" self))
 
-(defmethod %ensure-appendable ((self %typed-value))
-  (%type-check-failure "appendable (:bag or :map)" self))
-
-(defmethod %ensure-appendable ((self %bag))
-  t)
-
-(defmethod %ensure-appendable ((self %map))
-  t)
-
-
-;;;; test 0 ;;;;
-
-(defun test-stack-dsl ()
-  #+nil(%ensure-type 5 6)
-  (let ((x (make-instance '%typed-value)))
-    #+nil(%ensure-type x 7)
-    (let ((y (make-instance '%typed-value)))
-      (%ensure-type x y)
-      (setf (%type x) 'a)
-      #+nil(%ensure-type x y)
-      (setf (%type y) 'a)
-      (%ensure-type x y)
-      (let ((enum-a (make-instance '%enum))
-	    (enum-b (make-instance '%enum)))
-	(setf (%value-list enum-a) '(1 2 3))
-	(setf (%value-list enum-b) '(1))
-	#+nil(%ensure-type enum-a enum-b)
-	#+nil(%ensure-type enum-b enum-a)
-	(%ensure-type enum-a enum-a)
-	(let ((enum-c (make-instance '%enum)))
-	  (setf (%value-list enum-c) '(2 3 1))
-	  (%ensure-type enum-a enum-c)
-	  (%ensure-type enum-c enum-a)
-	  )
-	(let ((bag-a (make-instance '%bag)))
-	  #+nil(%ensure-type bag-a x)
-	  (let ((bag-b (make-instance '%bag)))
-	    #+nil(%ensure-type bag-a bag-b)
-	    (setf (%element-type bag-a) 'a)
-	    #+nil(%ensure-type bag-a bag-b)
-	    (setf (%element-type bag-b) 'z)
-	    #+nil(%ensure-type bag-a bag-b)
-	    (%ensure-type bag-a bag-a)
-	    (setf (%element-type bag-b) 'a)
-	    (%ensure-type bag-a bag-a)
-	    ))
-	(let ((map-a (make-instance '%bag)))
-	  (let ((map-b (make-instance '%bag)))
-	    (setf (%element-type map-a) 'a)
-	    (setf (%element-type map-b) 'z)
-	    (%ensure-type map-a map-a)
-	    (setf (%element-type map-b) 'a)
-	    (%ensure-type map-a map-a)
-	    ))
-	  )))
-  (let ((bag-a (make-instance '%bag)))
-    #+nil(%ensure-appendable 8)
-    (let (#+nil(x (make-instance '%typed-value)))
-      #+nil(%ensure-appendable x)
-      (%ensure-appendable bag-a)))
-  (let ((or-a (make-instance '%or-type)))
-    #+nil(%ensure-type or-a 5)
-    (let ((a-var (make-instance '%typed-value))
-	  (b-var (make-instance '%typed-value))
-	  (c-var (make-instance '%typed-value)))
-      (setf (%type a-var) 'a)
-      (setf (%type b-var) 'b)
-      (setf (%type c-var) 'c)
-      (setf (%type-list or-a) '(a b))
-      (%ensure-type or-a a-var)
-      (%ensure-type or-a b-var)
-      #+nil(%ensure-type or-a c-var)))
-  "test finished")
-
-;;;;;;;;;; end test 0 ;;;;;;;;;;;;;;
 
 (defun assert-is-stack (stack)
   (assert (subtypep (type-of stack) '%typed-stack)))
@@ -237,80 +330,119 @@
   (setf (ordered-list self) (append (ordered-list self) (list new-val)))
   self)
 
-;;;;;;;;;; test 2 ;;;;
 
-(defclass machineDescriptor-type (stack-dsl::%typed-value)
-  ((%field-type-pipeline :accessor %field-type-pipeline :initform 'pipeline-type)
+;;;;;;;;;; dev tests ;;;;
+
+
+(defclass machineDescriptor (stack-dsl::%typed-value)
+  ((%field-type-pipeline :accessor %field-type-pipeline :initform "pipeline")
    (pipeline :accessor pipeline)
-   (%field-type-statesBag :accessor %field-type-statesBag :initform 'statesBag-type)
+   (%field-type-statesBag :accessor %field-type-statesBag :initform "statesBag")
    (statesBag :accessor statesBag)
-   (%field-type-initiallyDescriptor :accessor %field-type-initiallyDescriptor :initform 'initiallyDescriptor-type)
+   (%field-type-initiallyDescriptor :accessor %field-type-initiallyDescriptor :initform "initiallyDescriptor")
    (initiallyDescriptor :accessor initiallyDescriptor)
-   (%field-type-name :accessor %field-type-name :initform 'name-type)
+   (%field-type-name :accessor %field-type-name :initform "name")
    (name :accessor name)
-   ))
+   ) (:default-initargs :%type "machineDescriptor"))
 
 (defclass machineDescriptor-stack (stack-dsl::%typed-stack) ())
-
 (defmethod initialize-instance :after ((self machineDescriptor-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) 'machineDescriptor-type))
+  (setf (stack-dsl::%element-type self) "machineDescriptor"))
 
+(defclass initiallyDescriptor (stack-dsl::%bag) () (:default-initargs :%type "initiallyDescriptor"))
+(defmethod initialize-instance :after ((self initiallyDescriptor) &key &allow-other-keys)  ;; type for items in bag
+	   (setf (stack-dsl::%bag-element-type self) "initiallyDescriptor"))
+(defclass initiallyDescriptor-stack(stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self initiallyDescriptor-stack) &key &allow-other-keys)
+	   (setf (stack-dsl::%element-type self) "initiallyDescriptor"))
 
-(defclass name-type (stack-dsl::%string) ())
+(defclass statesBag (stack-dsl::%bag) () (:default-initargs :%type "statesBag"))
+(defmethod initialize-instance :after ((self statesBag) &key &allow-other-keys)  ;; type for items in bag
+	   (setf (stack-dsl::%bag-element-type self) "statesBag"))
+(defclass statesBag-stack(stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self statesBag-stack) &key &allow-other-keys)
+	   (setf (stack-dsl::%element-type self) "statesBag"))
+(defclass state (stack-dsl::%typed-value)
+  ((%field-type-eventsBag :accessor %field-type-eventsBag :initform "eventsBag")
+   (eventsBag :accessor eventsBag)
+   (%field-type-name :accessor %field-type-name :initform "name")
+   (name :accessor name)
+   ) (:default-initargs :%type "state"))
+
+(defclass name (stack-dsl::%string) () (:default-initargs :%type "name"))
 (defclass name-stack (stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self name-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) 'name-type))
+  (setf (stack-dsl::%element-type self) "name"))
 
-
+(defclass pipeline (stack-dsl::%map) () (:default-initargs :%type "pipeline"))
+(defmethod initialize-instance :after ((self pipeline) &key &allow-other-keys)  ;; type for items in map
+	   (setf (stack-dsl::%map-element-type self) "pipeline"))
+(defclass pipeline-stack(stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self pipeline-stack) &key &allow-other-keys)
+	   (setf (stack-dsl::%element-type self) "pipeline"))
 
 (defparameter *input-s* nil)
 (defparameter *output-s* nil)
 (defparameter *var* nil)
 
+;;;; test 0 ;;;;
+
+(defun test-stack-dsl ()
+  (initialize-types (asdf:system-relative-pathname :stack-dsl "types.json"))
+  #+nil(%ensure-type 5 6)
+  (let ((x (make-instance '%typed-value :%type "name")))
+    #+nil(%ensure-type x 7)
+    (%ensure-type "name" x))
+  #+nil(let ((y (make-instance '%typed-value :%type "a")))
+    (%ensure-type "name" y))
+;; test: bag, map, enum, compound, field with constant value
+  "test finished")
+
+;;;;;;;;;; end test 0 ;;;;;;;;;;;;;;
+
 (defun test2-stack-dsl ()
-  (let ((input-s (make-instance '%typed-stack :element-type 'machineDescriptor-type))
-	(output-s (make-instance '%typed-stack :element-type 'machineDescriptor-type)))
+  (let ((input-s (make-instance '%typed-stack :element-type 'machineDescriptor))
+	(output-s (make-instance '%typed-stack :element-type 'machineDescriptor)))
     (%push-empty input-s)
     (format nil "length input stack = ~a, output stack = ~a" 
 	    (length (%stack input-s)) (length (%stack output-s)))
     #+nil(progn
-      (%output input-s output-s)
-      (format nil "length input stack = ~a, output stack = ~a" 
-	      (length (%stack input-s)) (length (%stack output-s))))
+	   (%output input-s output-s)
+	   (format nil "length input stack = ~a, output stack = ~a" 
+		   (length (%stack input-s)) (length (%stack output-s))))
     #+nil(progn
 	   (%output input-s output-s)
 	   (%pop input-s)
-	   (format nil "length input stack = ~a, output stack = ~a" 
+	   (format *standard-output* "length input stack = ~a, output stack = ~a" 
 		   (length (%stack input-s)) (length (%stack output-s)))
 	   ;; use inspector to examine these values
 	   (setf *input-s* input-s)
 	   (setf *output-s* output-s))
-    #+nil(let ((var-a (make-instance 'machineDescriptor-type)))
-      (%replace-top input-s var-a)
-      (%output input-s output-s)
-      (%pop input-s)
-      ;; use inspector to examine these values
-      (setf *input-s* input-s)
-      (setf *output-s* output-s)
-      
-      (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
+    (let ((var-a (make-instance 'machineDescriptor)))
+	   (%output input-s output-s)
+	   (%pop input-s)
+	   ;; use inspector to examine these values
+	   (setf *input-s* input-s)
+	   (setf *output-s* output-s)
+	   
+	   (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
 
-    #+nil(let ((var-a (make-instance 'machineDescriptor-type)))
-      (%replace-top input-s var-a)
-      (let ((n (make-instance 'name-type)))
-	(setf (%value n) "abc")
-	(%set-field (%top input-s) 'name n)
-	(%output input-s output-s)
-	(%pop input-s)
-	;; use inspector to examine these values
-	(setf *input-s* input-s)
-	(setf *output-s* output-s)
-	(setf *var* (%get-field (%top output-s) 'name))
-	
-	(format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
-      )
-    (let ((md (make-instance 'machineDescriptor-type))
-	  (bag-a (make-instance '%bag :element-type 'machineDescriptor-type)))
+    #+nil(let ((var-a (make-instance 'machineDescriptor)))
+	   (%replace-top input-s var-a)
+	   (let ((n (make-instance 'name)))
+	     (setf (%value n) "abc")
+	     (%set-field (%top input-s) 'name n)
+	     (%output input-s output-s)
+	     (%pop input-s)
+	     ;; use inspector to examine these values
+	     (setf *input-s* input-s)
+	     (setf *output-s* output-s)
+	     (setf *var* (%get-field (%top output-s) 'name))
+	     
+	     (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
+	   )
+    #+nil(let ((md (make-instance 'machineDescriptor))
+	  (bag-a (make-instance '%bag :bag-element-type 'machineDescriptor)))
       (%replace-top input-s bag-a)
       (%append (%top input-s) md)
       (%output input-s output-s)

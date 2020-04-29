@@ -1,7 +1,6 @@
 
 = stack-language
   ~rmSpaces
-  existenceClear
   headerEmit
   {[ ?SYMBOL
     SYMBOL
@@ -20,7 +19,7 @@
 
 = dsl-tail
   [ ?'{' @classWithFields
-  | ?'|' @orClass
+  | ?'|' @compoundClass
   | ?':' @colonTail
   | ?CHARACTER/' @enumTail
   | * errorTail
@@ -41,14 +40,14 @@
   '}'
   fieldEmit
 
-= orClass
+= compoundClass
   '|' 
-  orPushNew
+  compoundPushNew
   SYMBOL 
-  orAddSymbol
+  compoundAddSymbol
   existenceTypeSave
-  {[ ?'|' '|' SYMBOL orAddSymbol existenceTypeSave | * > ]}
-  orEmit
+  {[ ?'|' '|' SYMBOL compoundAddSymbol existenceTypeSave | * > ]}
+  compoundEmit
 
 = bagDef SYMBOL/bag SYMBOL bagEmit
 = mapDef SYMBOL/map SYMBOL mapEmit

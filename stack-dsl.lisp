@@ -3,7 +3,6 @@
 (defmethod stack-language ((p pasm:parser))
   (let ((prev-rule (current-rule p)))     (setf (current-rule p) "stack-language") (pasm::p-into-trace p)
 (pasm::pasm-filter-stream p #'rmSpaces)
-(pasm:call-external p #'existenceClear)
 (pasm:call-external p #'headerEmit)
 (loop
 (cond
@@ -40,7 +39,7 @@
 (cond
 ((pasm:parser-success? (pasm:lookahead-char? p #\{))(pasm:call-rule p #'classWithFields)
 )
-((pasm:parser-success? (pasm:lookahead-char? p #\|))(pasm:call-rule p #'orClass)
+((pasm:parser-success? (pasm:lookahead-char? p #\|))(pasm:call-rule p #'compoundClass)
 )
 ((pasm:parser-success? (pasm:lookahead-char? p #\:))(pasm:call-rule p #'colonTail)
 )
@@ -77,18 +76,18 @@
 (pasm:call-external p #'fieldEmit)
 (setf (current-rule p) prev-rule) (pasm::p-return-trace p)))
 
-(defmethod orClass ((p pasm:parser))
-  (let ((prev-rule (current-rule p)))     (setf (current-rule p) "orClass") (pasm::p-into-trace p)
+(defmethod compoundClass ((p pasm:parser))
+  (let ((prev-rule (current-rule p)))     (setf (current-rule p) "compoundClass") (pasm::p-into-trace p)
 (pasm:input-char p #\|)
-(pasm:call-external p #'orPushNew)
+(pasm:call-external p #'compoundPushNew)
 (pasm:input p :SYMBOL)
-(pasm:call-external p #'orAddSymbol)
+(pasm:call-external p #'compoundAddSymbol)
 (pasm:call-external p #'existenceTypeSave)
 (loop
 (cond
 ((pasm:parser-success? (pasm:lookahead-char? p #\|))(pasm:input-char p #\|)
 (pasm:input p :SYMBOL)
-(pasm:call-external p #'orAddSymbol)
+(pasm:call-external p #'compoundAddSymbol)
 (pasm:call-external p #'existenceTypeSave)
 )
 ( t (return)
@@ -97,7 +96,7 @@
 
 )
 
-(pasm:call-external p #'orEmit)
+(pasm:call-external p #'compoundEmit)
 (setf (current-rule p) prev-rule) (pasm::p-return-trace p)))
 
 (defmethod bagDef ((p pasm:parser))

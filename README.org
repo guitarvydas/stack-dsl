@@ -44,6 +44,11 @@
 #+end_src
 * results
 #+RESULTS: stack-dsl
+: To load "stack-dsl":
+:   Load 1 ASDF system:
+:     stack-dsl
+: ; Loading "stack-dsl"
+: [package stack-dsl].
 
 
 * build & test
