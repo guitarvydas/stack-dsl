@@ -16,10 +16,9 @@
    #:%top
    #:%push-empty
    #:%check-type
-   #:%replace-top
    #:%type
    #:%element-type
-   #:%field--type
+   #:%field-type
    #:%set-field
    #:%get-field
    #:%append))
