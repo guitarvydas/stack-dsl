@@ -67,6 +67,13 @@
 (defun make-type-from-string (s)
   s)
 
+(defun string-member (s lis)
+  ;; does this need to be more efficient?  (for small dsl's, we don't really care)
+  (dolist (str lis)
+    (when (string= str s)
+      (return-from string-member T)))
+  nil)
+
 
 (defclass type-descriptor () 
   ((descriptor-alist :accessor descriptor-alist :initarg :descriptor-alist)))
@@ -172,13 +179,6 @@
   nil)
 (defmethod shallow-type-equal ((self %typed-value) (obj %typed-value))
   (string= (%type self) (%type obj)))
-
-(defun string-member (s lis)
-  ;; does this need to be more efficient?  (for small dsl's, we don't really care)
-  (dolist (str lis)
-    (when (string= str s)
-      (return-from string-member T)))
-  nil)
 
 (defun get-type (name)
   (multiple-value-bind (descriptor success)
@@ -313,13 +313,16 @@
   (first (%stack stack)))
 ;;
 
+(defun lisp-sym (str)
+  (intern (string-upcase str) "STACK-DSL"))
+
 (defun %get-field (obj field-name)
   ;; return obj.field
-  (slot-value obj field-name))
+  (slot-value obj (lisp-sym field-name)))
 
 (defun %set-field (obj field-name val)
   ;; obj.field := val
-  (setf (slot-value obj field-name) val))
+  (setf (slot-value obj (lisp-sym field-name)) val))
 
 (defmethod %append ((self %bag) (new-val %typed-value))
   ;(setf (lis self) (append (lis self) (list new-val)))
@@ -395,7 +398,6 @@
     (%ensure-type "name" x))
   #+nil(let ((y (make-instance '%typed-value :%type "a")))
     (%ensure-type "name" y))
-;; test: bag, map, enum, compound, field with constant value
   "test finished")
 
 ;;;;;;;;;; end test 0 ;;;;;;;;;;;;;;
@@ -406,51 +408,26 @@
     (%push-empty input-s)
     (format nil "length input stack = ~a, output stack = ~a" 
 	    (length (%stack input-s)) (length (%stack output-s)))
-    #+nil(progn
-	   (%output input-s output-s)
-	   (format nil "length input stack = ~a, output stack = ~a" 
-		   (length (%stack input-s)) (length (%stack output-s))))
-    #+nil(progn
-	   (%output input-s output-s)
-	   (%pop input-s)
-	   (format *standard-output* "length input stack = ~a, output stack = ~a" 
-		   (length (%stack input-s)) (length (%stack output-s)))
-	   ;; use inspector to examine these values
-	   (setf *input-s* input-s)
-	   (setf *output-s* output-s))
-    (let ((var-a (make-instance 'machineDescriptor)))
-	   (%output input-s output-s)
-	   (%pop input-s)
-	   ;; use inspector to examine these values
-	   (setf *input-s* input-s)
-	   (setf *output-s* output-s)
-	   
-	   (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
 
-    #+nil(let ((var-a (make-instance 'machineDescriptor)))
-	   (%replace-top input-s var-a)
-	   (let ((n (make-instance 'name)))
-	     (setf (%value n) "abc")
-	     (%set-field (%top input-s) 'name n)
-	     (%output input-s output-s)
-	     (%pop input-s)
-	     ;; use inspector to examine these values
-	     (setf *input-s* input-s)
-	     (setf *output-s* output-s)
-	     (setf *var* (%get-field (%top output-s) 'name))
-	     
-	     (format *standard-output* "~& top of output the same as var-a? ~a~%" (eq (%top output-s) var-a)))
-	   )
-    #+nil(let ((md (make-instance 'machineDescriptor))
-	  (bag-a (make-instance '%bag :bag-element-type 'machineDescriptor)))
-      (%replace-top input-s bag-a)
-      (%append (%top input-s) md)
-      (%output input-s output-s)
-      ;; use inspector to examine these values
-      (setf *input-s* input-s)
-      (setf *output-s* output-s)
-      (setf *var* md))
-    )
-  )
+    (let ((var-md (make-instance 'machineDescriptor)))
+      (let ((input-md (make-instance 'machineDescriptor-stack :element-type 'machineDescriptor))
+	    (output-md (make-instance 'machineDescriptor-stack :element-type 'machineDescriptor))
+	    (nm (make-instance 'name))
+	    (input-name (make-instance 'name-stack :element-type 'name))
+	    (output-name (make-instance 'name-stack :element-type 'name)))
+	(setf (%value nm) "abc")
+	(%push input-name nm)
+	(%output input-name output-name)
+	(%push input-md var-md)
+	
+        (%set-field (%top input-md) "name" (%top output-name))
+	(%pop output-name)
+	
+	(%output input-md output-md)
+	(%pop input-md)
+	;; use inspector to examine these values
+	(setf *input-s* input-md)
+	(setf *output-s* output-md)))
+    ))
 
 ;;;;;;;;;; end test 2 ;;;;
