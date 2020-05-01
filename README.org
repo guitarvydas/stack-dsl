@@ -48,7 +48,7 @@
 :   Load 1 ASDF system:
 :     stack-dsl
 : ; Loading "stack-dsl"
-: [package stack-dsl].
+: 
 
 
 * build & test

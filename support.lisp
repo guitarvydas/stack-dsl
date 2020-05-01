@@ -126,13 +126,9 @@
 (defun create-structure-descriptor (adesc)
   (let ((alist-name-type-pairs (cdr (assoc :fields adesc))))
     ;; (( (:FIELD-NAME . "exprkind") (:FIELD-TYPE . "exprkind") )...)
-    ;; for this DSL, we need only the types, so we cheat...
-    (let ((type-list (mapcar #'(lambda (pair)
-				 (make-type-from-string (cdr (assoc :field-type pair))))
-			     alist-name-type-pairs)))
-	(make-instance 'structure-descriptor
-		       :descriptor-alist adesc
-		       :fields type-list))))
+    (make-instance 'structure-descriptor
+		   :descriptor-alist adesc
+		   :fields alist-name-type-pairs)))
   
 (defun initialize-type-hash (type-hash type-table)
   (dolist (a type-table)
@@ -180,14 +176,14 @@
 (defmethod shallow-type-equal ((self %typed-value) (obj %typed-value))
   (string= (%type self) (%type obj)))
 
-(defun get-type (name)
+(defun lookup-type (name)
   (multiple-value-bind (descriptor success)
       (gethash name *type-hash*)
     (if (not success)
 	nil
 	descriptor)))
 
-(defun get-type-or-fail (name)
+(defun lookup-type-or-fail (name)
   (multiple-value-bind (descriptor success)
       (gethash name *type-hash*)
     (if (null success)
@@ -206,23 +202,26 @@
 	(return-from find-field-type ty))))
   nil)
 
-(defmethod get-field-type (type-desc field-name)
+(defmethod lookup-field-type (type-desc field-name)
   nil)
-(defmethod get-field-type ((type-desc structure-descriptor) field-name)
-  (let ((field-pairs (cdr (assoc :fields (fields type-desc)))))
+(defmethod lookup-field-type ((type-desc structure-descriptor) field-name)
+  (let ((field-pairs (fields type-desc)))
     (if (null field-pairs)
-	(%type-check-failure-format "internal error get-field-type ~s ~s"
-				  type-desc field-name)
+	(%type-check-failure-format "internal error lookup-field-type ~s ~s"
+				    type-desc field-name)
 	(let ((field-type (find-field-type field-pairs field-name)))
 	  (if (null field-type)
 	      nil
 	      field-type)))))
   
-(defun get-field-type-or-fail (type-name field-name)
-  (let ((main-desc (get-type-or-fail type-name)))
-    (let ((field-type-desc (get-field-type main-desc field-name)))
-      (if field-type-desc
-	  field-type-desc
+(defun lookup-field-type-or-fail (type-name field-name)
+  (let ((main-desc (lookup-type-or-fail type-name)))
+    (let ((field-type-name (lookup-field-type main-desc field-name)))
+      (if field-type-name
+	  (let ((field-desc (lookup-type-or-fail field-type-name)))
+	    (if field-desc
+		field-desc
+		(%type-check-failure-format "typo? type ~a does not have a field ~a" type-name field-name)))
 	  (%type-check-failure-format "type ~a does not have a field ~a" type-name field-name)))))
 
 ;; type checking
@@ -246,21 +245,21 @@
 
 (defmethod %ensure-type (expected-type (obj %typed-value))
   ;; return T if type checks out, else %type-check-failure
-  (let ((expected-type-desc (get-type-or-fail expected-type)))
-    (let ((obj-desc (get-type-or-fail (%type obj))))
+  (let ((expected-type-desc (lookup-type-or-fail expected-type)))
+    (let ((obj-desc (lookup-type-or-fail (%type obj))))
       (shallow-type-equal expected-type-desc obj-desc))))
 
 (defmethod %ensure-field-type ((self T) field-name (obj T))
   (%type-check-failure (format nil "~a has no field called ~a" self field-name) obj))
 
 (defmethod %ensure-field-type (expected-type field-name (obj %typed-value))
-  (let ((expected-type-desc (get-type-or-fail expected-type)))
+  (let ((expected-type-desc (lookup-type-or-fail expected-type)))
     (unless expected-type-desc 
       (%type-check-failure "not a structure" expected-type))
-    (let ((obj-type-desc (get-type-or-fail (%type obj))))
+    (let ((obj-type-desc (lookup-type-or-fail (%type obj))))
       (unless obj-type-desc 
 	(%type-check-failure "not a structure" obj))
-      (let ((field-type-desc (get-field-type-or-fail expected-type field-name)))
+      (let ((field-type-desc (lookup-field-type-or-fail expected-type field-name)))
 	(shallow-type-equal field-type-desc obj-type-desc)))))
 
 ;;;;;;;;;;;; end type checking
@@ -271,13 +270,18 @@
 (defun assert-is-stack (stack)
   (assert (subtypep (type-of stack) '%typed-stack)))
 
+(defun lisp-sym (str)
+  (intern (string-upcase str)))
+
 (defun %push-empty (stack)
   ;; push some sort of empty indicator onto the stack
   (assert-is-stack stack)
   (let ((eltype (%element-type stack)))
-    (let ((obj (make-instance eltype :%type eltype)))
-      (push obj (%stack stack))
-      stack)))
+    (assert (stringp eltype))
+    (let ((clss (lisp-sym eltype)))
+      (let ((obj (make-instance clss :%type eltype)))
+	(push obj (%stack stack))
+	stack))))
 
 (defun %output (input-stack output-stack)
   ;; "return" the top item on the input-stack by pushing it onto the output
@@ -313,10 +317,7 @@
   (first (%stack stack)))
 ;;
 
-(defun lisp-sym (str)
-  (intern (string-upcase str) "STACK-DSL"))
-
-(defun %get-field (obj field-name)
+(defun %lookup-field (obj field-name)
   ;; return obj.field
   (slot-value obj (lisp-sym field-name)))
 

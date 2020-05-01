@@ -3,6 +3,7 @@
   (:export
    #:transpile-stack
    #:%ensure-existence
+   #:lisp-sym
 
    #:%string
    #:%value
@@ -15,6 +16,7 @@
    #:%pop
    #:%top
    #:%push-empty
+   #:%push
    #:%check-type
    #:%type
    #:%element-type
