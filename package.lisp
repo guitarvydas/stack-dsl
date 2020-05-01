@@ -9,16 +9,16 @@
    #:%stack
    
    #:%ensure-type
+   #:%ensure-field-type
    #:%ensure-appendable-type
    #:%output
    #:%pop
    #:%top
    #:%push-empty
    #:%check-type
-   #:%replace-top
    #:%type
    #:%element-type
-   #:%field--type
+   #:%field-type
    #:%set-field
    #:%get-field
    #:%append))
