@@ -17,18 +17,18 @@
    (%value   :accessor %value   :initform :no-value)))
 
 (defclass %compound-type (%typed-value)
-  ((%type-list :accessor %type-list :initform nil :initarg :type-list)))
+  ((%type-list :accessor %type-list :initform nil :initarg :%type-list)))
   
 (defclass %typed-stack ()
-  ((%element-type :accessor %element-type :initform :no-type :initarg :element-type)
+  ((%element-type :accessor %element-type :initform :no-type :initarg :%element-type)
    (%stack :accessor %stack :initform nil)))
 
 (defclass %bag (%typed-value)
-  ((%bag-element-type :accessor %bag-element-type :initform :no-type :initarg :bag-element-type)
+  ((%element-type :accessor %element-type :initform :no-type :initarg :%element-type)
    (lis :accessor lis :initform nil)))
 
 (defclass %map (%typed-value)
-  ((%map-element-type :accessor %map-element-type :initform :no-type :initarg :map-element-type)
+  ((%element-type :accessor %element-type :initform :no-type :initarg :%element-type)
    (ordered-list :accessor ordered-list :initform nil)))
 
 (defclass %string (%typed-value)
@@ -102,7 +102,7 @@
   
 (defun create-bag-descriptor (adesc)
   (let ((eltype (intern (string-upcase (cdr (assoc :element-type adesc))) "KEYWORD")))
-    (make-instance 'map-descriptor 
+    (make-instance 'bag-descriptor 
 		   :descriptor-alist adesc
 		   :element-type eltype)))
   
@@ -237,7 +237,10 @@
 (defun initialize-types (filename)
   (setf *type-table* (types-as-alist filename))
   (setf *type-hash* (make-hash-table :test 'equal))
-  (initialize-type-hash *type-hash* *type-table*))
+  (initialize-type-hash *type-hash* *type-table*)
+  (maphash #'(lambda (k v)
+	       (format *standard-output* "~&type ~s ~s~%" k v))
+	   *type-hash*))
  
     
 (defmethod %ensure-type (expected-type (obj T))
@@ -248,6 +251,18 @@
   (let ((expected-type-desc (lookup-type-or-fail expected-type)))
     (let ((obj-desc (lookup-type-or-fail (%type obj))))
       (shallow-type-equal expected-type-desc obj-desc))))
+
+(defmethod %ensure-appendable-type ((obj T))
+  (%type-check-failure-format "type ~a must be a %typed-stack, but is not"
+			      obj))
+(defmethod %ensure-appendable-type ((stack %typed-stack))
+  (let ((type-desc (lookup-type-or-fail (%element-type stack))))
+    (if (or (eq (type-of type-desc) 'map-descriptor)
+	    (eq (type-of type-desc) 'bag-descriptor))
+	:ok
+	(%type-check-failure-format "type ~a is expected to be a bag or a map"
+				    (%element-type stack))))
+  T)
 
 (defmethod %ensure-field-type ((self T) field-name (obj T))
   (%type-check-failure (format nil "~a has no field called ~a" self field-name) obj))
@@ -283,7 +298,7 @@
 	(push obj (%stack stack))
 	stack))))
 
-(defun %output (input-stack output-stack)
+(defun %output (output-stack input-stack)
   ;; "return" the top item on the input-stack by pushing it onto the output
   ;; stack
   ;; no need to type-check, since DSL guarantees that the input and output types
@@ -355,14 +370,14 @@
 
 (defclass initiallyDescriptor (stack-dsl::%bag) () (:default-initargs :%type "initiallyDescriptor"))
 (defmethod initialize-instance :after ((self initiallyDescriptor) &key &allow-other-keys)  ;; type for items in bag
-	   (setf (stack-dsl::%bag-element-type self) "initiallyDescriptor"))
+	   (setf (stack-dsl::%element-type self) "initiallyDescriptor"))
 (defclass initiallyDescriptor-stack(stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self initiallyDescriptor-stack) &key &allow-other-keys)
 	   (setf (stack-dsl::%element-type self) "initiallyDescriptor"))
 
 (defclass statesBag (stack-dsl::%bag) () (:default-initargs :%type "statesBag"))
 (defmethod initialize-instance :after ((self statesBag) &key &allow-other-keys)  ;; type for items in bag
-	   (setf (stack-dsl::%bag-element-type self) "statesBag"))
+	   (setf (stack-dsl::%element-type self) "statesBag"))
 (defclass statesBag-stack(stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self statesBag-stack) &key &allow-other-keys)
 	   (setf (stack-dsl::%element-type self) "statesBag"))
@@ -380,7 +395,7 @@
 
 (defclass pipeline (stack-dsl::%map) () (:default-initargs :%type "pipeline"))
 (defmethod initialize-instance :after ((self pipeline) &key &allow-other-keys)  ;; type for items in map
-	   (setf (stack-dsl::%map-element-type self) "pipeline"))
+	   (setf (stack-dsl::%element-type self) "pipeline"))
 (defclass pipeline-stack(stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self pipeline-stack) &key &allow-other-keys)
 	   (setf (stack-dsl::%element-type self) "pipeline"))

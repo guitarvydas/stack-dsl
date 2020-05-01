@@ -25,7 +25,7 @@
 	(tyname (savedSymbol self)))
     (pasm:emit-string self "(defclass ~a (stack-dsl::%bag) () (:default-initargs :%type \"~a\"))~%" tyname tyname)
     (pasm:emit-string self "(defmethod initialize-instance :after ((self ~a) &key &allow-other-keys)  ;; type for items in bag~%" tyName)
-    (pasm:emit-string self "(setf (stack-dsl::%bag-element-type self) \"~a\"))~%" tyName)
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyName)
     (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
     (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
     (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyName)))
@@ -35,7 +35,7 @@
 	(tyname (savedSymbol self)))
     (pasm:emit-string self "(defclass ~a (stack-dsl::%map) () (:default-initargs :%type \"~a\"))~%" tyname tyname)
     (pasm:emit-string self "(defmethod initialize-instance :after ((self ~a) &key &allow-other-keys)  ;; type for items in map~%" tyName)
-    (pasm:emit-string self "(setf (stack-dsl::%map-element-type self) \"~a\"))~%" tyName)
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyName)
     (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
     (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
     (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyname)))
@@ -47,12 +47,13 @@
     (let ((tyname (savedSymbol self)))
       (pasm:emit-string self "
 (defclass ~a (stack-dsl::%compound-type) () (:default-initargs :%type \"~a\"))
-(defclass ~a-stack (stack-dsl::%typed-stack) ())
 (defmethod initialize-instance :after ((self ~a) &key &allow-other-keys)
   (setf (stack-dsl::%type-list self) '~s))
+(defclass ~a-stack (stack-dsl::%typed-stack) () (:default-initargs :%element-type \"~a\"))
 
 "
-			tyname (string-upcase tyname) tyname tyname (compound-list self))))
+			tyname tyname tyname (compound-list self)
+			tyname tyname)))
 
 (defmethod fieldClear ((self stack-dsl-parser))
   (setf (field-list self) nil))
