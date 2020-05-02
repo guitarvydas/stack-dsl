@@ -29,7 +29,7 @@
 
 (defclass %map (%typed-value)
   ((%element-type :accessor %element-type :initform :no-type :initarg :%element-type)
-   (ordered-list :accessor ordered-list :initform nil)))
+   (%ordered-list :accessor %ordered-list :initform nil)))
 
 (defclass %string (%typed-value)
   ()
@@ -346,7 +346,7 @@
   self)
 
 (defmethod %append ((self %map) (new-val %typed-value))
-  (setf (ordered-list self) (append (ordered-list self) (list new-val)))
+  (setf (%ordered-list self) (append (%ordered-list self) (list new-val)))
   self)
 
 
