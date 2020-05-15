@@ -9,6 +9,17 @@
 (defmethod errorTail ((self stack-dsl-parser)) (error "tail error"))
 (defmethod errorColonTail ((self stack-dsl-parser)) (error "colon tail error"))
 
+(defmethod nullEmit ((self stack-dsl-parser))
+  (let ((tyname (savedSymbol self)))
+    (pasm:emit-string self "
+(defclass ~a (stack-dsl::%null) () (:default-initargs :%type \"~a\"))
+(defclass ~a-stack (stack-dsl::%typed-stack) ())
+(defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)
+  (setf (stack-dsl::%element-type self) \"~a\"))
+
+"
+  tyname tyname tyname tyname tyname)))
+
 (defmethod stringEmit ((self stack-dsl-parser))
   (let ((tyname (savedSymbol self)))
     (pasm:emit-string self "
