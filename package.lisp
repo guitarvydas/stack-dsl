@@ -23,4 +23,11 @@
    #:%field-type
    #:%set-field
    #:%get-field
-   #:%append))
+   #:%append
+
+   ;; macros for using the environment stacks
+   #:~output       ;; move top(xxx-input) to top(xxx-output), pop xxx
+   #:~newscope     ;; push empty onto xxx stack
+   #:~append       ;; set top(xxx-input) to append(xxx-input,top(output-other)), pop output-other, top(xxx-input) must be a :bag or a :map
+   #:~set-field    ;; set top(xxx-input).field to top(output-other), pop output-other
+   ))

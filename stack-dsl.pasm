@@ -29,6 +29,7 @@
   ':'
   [ ?SYMBOL/bag @bagDef
   | ?SYMBOL/string @stringDef
+  | ?SYMBOL/null @nullDef
   | ?SYMBOL/map @mapDef
   | * errorColonTail
   ]
@@ -52,6 +53,7 @@
 = bagDef SYMBOL/bag SYMBOL bagEmit
 = mapDef SYMBOL/map SYMBOL mapEmit
 = stringDef SYMBOL/string stringEmit
+= nullDef SYMBOL/null nullEmit
 
 = fieldDefs
   @field

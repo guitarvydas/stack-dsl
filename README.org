@@ -6,6 +6,7 @@
   id = :string ... --> string def
   id = :map ...    --> map def
   id = | ...       --> or type def
+  id = '...' |  '...' | ...       --> enum def
 
   See dsl.lisp
 
@@ -44,26 +45,10 @@
 #+end_src
 * results
 #+RESULTS: stack-dsl
-: To load "stack-dsl":
+: To load "stack-dsl/use":
 :   Load 1 ASDF system:
-:     stack-dsl
-: ; Loading "stack-dsl"
-: 
+:     stack-dsl/use
+: ; Loading "stack-dsl/use"
+: ......
 
-
-* build & test
-#+name: stack-dsl
-#+begin_src lisp :results output
- (uiop:run-program "rm -rf ~/.cache/common-lisp ;
- rm -rf ~/quicklisp/local-projects/*.fasl ;
- rm -rf ~/quicklisp/local/projects/*~")
- (ql:quickload :stack-dsl)
-#+end_src
-
-#+name: stack-dsl
-#+begin_src lisp :results output
-  (load (stack-dsl::path "support.lisp"))
-  (stack-dsl::test-stack-dsl)
-  (stack-dsl::test2-stack-dsl)
-#+end_src
 

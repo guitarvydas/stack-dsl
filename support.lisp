@@ -36,6 +36,11 @@
   (:default-initargs 
    :%type "STRING-TYPE"))
 
+(defclass %null (%typed-value)
+  ()
+  (:default-initargs 
+   :%type "NULL-TYPE"))
+
 (defclass %enum (%typed-value)
   ((%value-list :accessor %value-list))
   (:default-initargs
@@ -80,6 +85,8 @@
 
 (defclass string-descriptor (type-descriptor)
   ())
+(defclass null-descriptor (type-descriptor)
+  ())
 (defclass map-descriptor (type-descriptor)
   ((element-type :accessor element-type :initarg :element-type)))
 (defclass bag-descriptor (type-descriptor)
@@ -93,6 +100,9 @@
 
 (defun create-string-descriptor (adesc)
   (make-instance 'string-descriptor :descriptor-alist adesc))
+
+(defun create-null-descriptor (adesc)
+  (make-instance 'null-descriptor :descriptor-alist adesc))
 
 (defun create-map-descriptor (adesc)
   (let ((eltype (intern (string-upcase (cdr (assoc :element-type adesc))) "KEYWORD")))
@@ -108,13 +118,9 @@
   
 (defun create-enum-descriptor (adesc)
   (let ((values-string-list (cdr (assoc :value-list adesc))))
-    (let ((values-keyword-list nil))
-      (dolist (str values-string-list)
-	(push (intern (string-upcase str) "KEYWORD")
-	      values-keyword-list))
-      (make-instance 'enum-descriptor
-		     :descriptor-alist adesc
-		     :value-list values-keyword-list))))
+    (make-instance 'enum-descriptor
+		   :descriptor-alist adesc
+		   :value-list values-string-list)))
 
 (defun create-compound-descriptor (adesc)
   (let ((string-list (cdr (assoc :types adesc))))
@@ -138,6 +144,7 @@
 	(let ((desc
 	       (ecase kind-sym
 		 (:string (create-string-descriptor adesc))
+		 (:null (create-null-descriptor adesc))
 		 (:enum (create-enum-descriptor adesc))
 		 (:structure (create-structure-descriptor adesc))
 		 (:compound (create-compound-descriptor adesc))
@@ -151,6 +158,8 @@
   nil)
 (defmethod deep-type-equal ((self string-descriptor) (obj string-descriptor))
   T)
+(defmethod deep-type-equal ((self null-descriptor) (obj null-descriptor))
+  T)
 (defmethod deep-type-equal ((self map-descriptor) (obj map-descriptor))
   (eq (element-type self) (element-type obj)))
 (defmethod deep-type-equal ((self bag-descriptor) (obj bag-descriptor))
@@ -160,6 +169,9 @@
 	(obj-values (values obj)))
     (and (= (length self-values) (length obj-values))
 	 (every #'(lambda (x) (string-member x obj-values)) self-values))))
+(defmethod deep-type-equal ((self enum-descriptor) (val STRING))
+  (let ((self-values (values self)))
+    (string-member val self-values)))
 (defmethod deep-type-equal ((self compound-descriptor) (obj compound-descriptor))
   (let ((self-types (types self))
 	(obj-types (types obj)))
@@ -245,6 +257,14 @@
     
 (defmethod %ensure-type (expected-type (obj T))
   (%type-check-failure-format "expected type must be a type descriptor, object must be  %typed-value"))
+
+(defmethod %ensure-type (expected-type (val STRING))
+  ;; return T if type checks out, else %type-check-failure
+  (let ((expected-type-desc (lookup-type-or-fail expected-type)))
+    (unless (eq 'enum-descriptor (type-of expected-type-desc))
+      (%type-check-failure-format "expected type must be an enum, object must be a string"))
+    (unless (deep-type-equal expected-type-desc val)
+      (%type-check-failure-format "%s is not an allowable value for enum ~s" val expected-type))))
 
 (defmethod %ensure-type (expected-type (obj %typed-value))
   ;; return T if type checks out, else %type-check-failure
@@ -350,100 +370,83 @@
   self)
 
 
-;;;;;;;;;; dev tests ;;;;
+;;;; macros ;;;;
 
 
-(defclass machineDescriptor (stack-dsl::%typed-value)
-  ((%field-type-pipeline :accessor %field-type-pipeline :initform "pipeline")
-   (pipeline :accessor pipeline)
-   (%field-type-statesBag :accessor %field-type-statesBag :initform "statesBag")
-   (statesBag :accessor statesBag)
-   (%field-type-initiallyDescriptor :accessor %field-type-initiallyDescriptor :initform "initiallyDescriptor")
-   (initiallyDescriptor :accessor initiallyDescriptor)
-   (%field-type-name :accessor %field-type-name :initform "name")
-   (name :accessor name)
-   ) (:default-initargs :%type "machineDescriptor"))
+;;
+;; There is no need to read the actual Lisp macros below.
+;; The macros, in effect, rewrite text into other text (over-simplicfication).
+;;
+;; I list the effect of each macro, in loose terms, below...:
 
-(defclass machineDescriptor-stack (stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self machineDescriptor-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) "machineDescriptor"))
+;; there are 2 stacks for every type
+;;  [one stack is called "input" and the other is called "output" (corresponding to the input parameter list and return value)]
 
-(defclass initiallyDescriptor (stack-dsl::%bag) () (:default-initargs :%type "initiallyDescriptor"))
-(defmethod initialize-instance :after ((self initiallyDescriptor) &key &allow-other-keys)  ;; type for items in bag
-	   (setf (stack-dsl::%element-type self) "initiallyDescriptor"))
-(defclass initiallyDescriptor-stack(stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self initiallyDescriptor-stack) &key &allow-other-keys)
-	   (setf (stack-dsl::%element-type self) "initiallyDescriptor"))
+;; 6 operations on the 2 kinds of stacks:
+;;
+;; output
+;; newscope
+;; replace-top
+;; append
+;; pop-output
+;; set-field
 
-(defclass statesBag (stack-dsl::%bag) () (:default-initargs :%type "statesBag"))
-(defmethod initialize-instance :after ((self statesBag) &key &allow-other-keys)  ;; type for items in bag
-	   (setf (stack-dsl::%element-type self) "statesBag"))
-(defclass statesBag-stack(stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self statesBag-stack) &key &allow-other-keys)
-	   (setf (stack-dsl::%element-type self) "statesBag"))
-(defclass state (stack-dsl::%typed-value)
-  ((%field-type-eventsBag :accessor %field-type-eventsBag :initform "eventsBag")
-   (eventsBag :accessor eventsBag)
-   (%field-type-name :accessor %field-type-name :initform "name")
-   (name :accessor name)
-   ) (:default-initargs :%type "state"))
+;; loosey-goosey meanings...
+;;
+;; output(type) : return value given by type of stack "input"
+;; newscope(type) : push <nothing-ness> onto input stack of type
+;; replace-top(x,y) : replace top x item with y
+;; append(x,y) : append y to top x
+;; pop-ouput(x) : kill top x item
+;; set-field (x f val) : assign val to x.f
 
-(defclass name (stack-dsl::%string) () (:default-initargs :%type "name"))
-(defclass name-stack (stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self name-stack) &key &allow-other-keys)
-  (setf (stack-dsl::%element-type self) "name"))
+;; loosey-goosey semantics...
+;;
+;; output(type) : move top input item to top of output stack ; move top(type) from input-type to output-type, pop input-type
+;; newscope(type) : push <nothing-ness> onto input stack of type
+;; replace-top(x,y) : replace top x item with y ; set top(x) to be top(y) (replace, not push), pop top(y), check that replacement type is the same as the replacee
+;; append(x,y) : append y to top x ; append top(y) to top(x), check that type of top(y) is append-able to top(x)
+;; pop-ouput(x) : kill top x item ; return top(x), pop x
+;; set-field (x f val) : top(x).f <- val where top(x) must have field f, val must be of type compatible with type top(x).f
 
-(defclass pipeline (stack-dsl::%map) () (:default-initargs :%type "pipeline"))
-(defmethod initialize-instance :after ((self pipeline) &key &allow-other-keys)  ;; type for items in map
-	   (setf (stack-dsl::%element-type self) "pipeline"))
-(defclass pipeline-stack(stack-dsl::%typed-stack) ())
-(defmethod initialize-instance :after ((self pipeline-stack) &key &allow-other-keys)
-	   (setf (stack-dsl::%element-type self) "pipeline"))
 
-(defparameter *input-s* nil)
-(defparameter *output-s* nil)
-(defparameter *var* nil)
+;; I hard-code the symbols "self" and "env" ...
+;; I use ~ and % as name prefixes for names.
+;; ~ is used to prefix macro names.
+;; % is used to prefix support routines.
+;; (I could have used Common Lisp packages to qualify names instead of prefixes, but I thought that prefixes are less scary and show (visually) my design intentions).
 
-;;;; test 0 ;;;;
+(defun ~in(name) `(,(intern (string-upcase (format nil "input-~a" name))) (env self)))
+(defun ~out(name) `(,(intern (string-upcase (format nil "output-~a" name))) (env self)))
 
-(defun test-stack-dsl ()
-  (initialize-types (asdf:system-relative-pathname :stack-dsl "types.json"))
-  #+nil(%ensure-type 5 6)
-  (let ((x (make-instance '%typed-value :%type "name")))
-    #+nil(%ensure-type x 7)
-    (%ensure-type "name" x))
-  #+nil(let ((y (make-instance '%typed-value :%type "a")))
-    (%ensure-type "name" y))
-  "test finished")
+(defun ~field(fname) (format nil "%field-type-~s" fname))
+(defun ~type(fname) (stack-dsl:lisp-sym fname))
 
-;;;;;;;;;; end test 0 ;;;;;;;;;;;;;;
+(defmacro ~output (ty)
+  `(progn 
+     (stack-dsl:%output ,(~out ty) ,(~in ty))
+     (stack-dsl:%pop ,(~in ty))))
 
-(defun test2-stack-dsl ()
-  (let ((input-s (make-instance '%typed-stack :element-type 'machineDescriptor))
-	(output-s (make-instance '%typed-stack :element-type 'machineDescriptor)))
-    (%push-empty input-s)
-    (format nil "length input stack = ~a, output stack = ~a" 
-	    (length (%stack input-s)) (length (%stack output-s)))
+(defmacro ~newscope (ty)
+  `(stack-dsl:%push-empty ,(~in ty)))
 
-    (let ((var-md (make-instance 'machineDescriptor)))
-      (let ((input-md (make-instance 'machineDescriptor-stack :element-type 'machineDescriptor))
-	    (output-md (make-instance 'machineDescriptor-stack :element-type 'machineDescriptor))
-	    (nm (make-instance 'name))
-	    (input-name (make-instance 'name-stack :element-type 'name))
-	    (output-name (make-instance 'name-stack :element-type 'name)))
-	(setf (%value nm) "abc")
-	(%push input-name nm)
-	(%output input-name output-name)
-	(%push input-md var-md)
-	
-        (%set-field (%top input-md) "name" (%top output-name))
-	(%pop output-name)
-	
-	(%output input-md output-md)
-	(%pop input-md)
-	;; use inspector to examine these values
-	(setf *input-s* input-md)
-	(setf *output-s* output-md)))
-    ))
+(defmacro ~append (stack1 stack2)
+  `(let ((val (stack-dsl:%top ,(~out stack2))))
+     (stack-dsl:%ensure-appendable-type ,(~in stack1))
+     (stack-dsl:%ensure-type (stack-dsl:%element-type 
+			      (stack-dsl:%top ,(~in stack1))) val)
+     (stack-dsl::%append (stack-dsl:%top ,(~in stack1)) val)
+     (stack-dsl:%pop ,(~out stack2))))
 
-;;;;;;;;;; end test 2 ;;;;
+(defmacro ~set-field (to field-name from)
+  ;; set top(input-to).f := output-from, pop from
+  `(let ((val (stack-dsl:%top ,(~out from))))
+     (stack-dsl:%ensure-field-type
+      ,to
+      ,field-name
+      val)
+     (stack-dsl:%set-field (stack-dsl:%top ,(~in to)) ,field-name val)
+     (stack-dsl:%pop ,(~out from))))
+
+;;;;;; end macros
+

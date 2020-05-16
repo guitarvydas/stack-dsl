@@ -140,7 +140,7 @@
   (setf (enum-list self) nil))
 
 (defmethod enumPushSymbol ((self stack-dsl-parser))
-  (push (scanner:token-text (pasm:accepted-token self)) (enum-list self)))
+  (push (format nil "\"~a\"" (scanner:token-text (pasm:accepted-token self))) (enum-list self)))
 
 (defmethod enumEmit ((self stack-dsl-parser))
   (let ((tyName (savedSymbol self)))
