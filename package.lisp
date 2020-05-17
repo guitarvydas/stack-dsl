@@ -9,9 +9,11 @@
    #:%value
    #:%stack
    
+   #:initialize-types
    #:%ensure-type
    #:%ensure-field-type
    #:%ensure-appendable-type
+   #:%ensure-enum-value
    #:%output
    #:%pop
    #:%top

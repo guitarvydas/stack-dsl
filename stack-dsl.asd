@@ -23,10 +23,12 @@
   :components ((:module "source"
                         :pathname "./"
                         :components ((:file "support")
+				     (:file "type-descriptor")
 				     (:file "mechanisms")
 				     (:file "transpile")
 				     (:file "stack-dsl" 
 					    :depends-on ("support"
+							 "type-descriptor"
 							 "mechanisms"
 							 "transpile"))))))
 
