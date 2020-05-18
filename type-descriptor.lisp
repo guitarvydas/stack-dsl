@@ -94,7 +94,7 @@
   (let ((self-fields (fields self))
 	(obj-fields (fields obj)))
     (and (= (length self-fields) (length obj-fields))
-	 (every #'(lambda (x) (string-member x obj-fields)) self-fields))))
+	 (every #'(lambda (x) (field-member x obj-fields)) self-fields))))
 
 (defmethod shallow-type-equal ((self T) (obj T))
   nil)
