@@ -36,11 +36,21 @@
 (defun make-type-from-string (s)
   s)
 
-(defun string-member (s lis)
+#+nil(defun string-member (s lis)
   ;; does this need to be more efficient?  (for small dsl's, we don't really care)
   (dolist (str lis)
     (when (string= str s)
       (return-from string-member T)))
+  nil)
+
+(defun field-equal (field1 field2)
+  (and (eql (car field1) (car field2))
+       (eql (cdr field1) (cdr field2))))
+
+(defun field-member (actual-field field-list)
+  (dolist (f field-list)
+    (when (field-equal actual-field f)
+      (return-from field-member t)))
   nil)
 
  
@@ -61,7 +71,7 @@
   ;; return T if type checks out, else %type-check-failure
   (let ((expected-type-desc (lookup-type-or-fail expected-type)))
     (let ((obj-desc (lookup-type-or-fail (%type obj))))
-      (shallow-type-equal expected-type-desc obj-desc))))
+      (deep-type-equal expected-type-desc obj-desc))))
 
 (defmethod %ensure-appendable-type ((obj T))
   (%type-check-failure-format "type ~a must be a %typed-stack, but is not"
@@ -78,7 +88,7 @@
 (defmethod %ensure-field-type ((self T) field-name (obj T))
   (%type-check-failure-format (format nil "~a has no field called ~a" self field-name)))
 
-(defmethod %ensure-field-type (expected-type-name field-name (obj %typed-value))
+(defmethod %ensure-field-type ((expected-type-name STRING) (field-name STRING) (obj %typed-value))
   ;; struct-type-desc = lookup-type-desc(expect-type)
   ;; field-type-desc = struct-type-desc.get-field(field-name)
   ;; error if not-found(field-type-desc)
@@ -94,14 +104,14 @@
       (let ((obj-type-desc (lookup-field-type-or-fail expected-type-name field-name)))
 	(unless obj-type-desc
 	  (%type-check-failure "~s does not have a known type (it must be a %typed-value or a STRING (enum value)" obj))	  
-	(unless (shallow-type-equal field-type-desc obj)
+	(unless (deep-type-equal field-type-desc obj-type-desc)
 	  (%type-check-failure-format "~s (with type ~s) does not have the same type as ~s.~s" 
 				      obj
 				      (%name obj-type-desc)
 				      expected-type-name
 				      field-name))))))
 
-(defmethod %ensure-field-type (expected-type-name field-name (val STRING))
+(defmethod %ensure-field-type ((expected-type-name STRING) (field-name STRING) (val STRING))
   ;; if val is a STRING, then expected-type.field MUST be an enum and val must be a valid enum tag for that enum
   (let ((struct-type-desc (lookup-type-or-fail expected-type-name)))
     (unless struct-type-desc 
@@ -179,7 +189,8 @@
 
 (defun %set-field (obj field-name val)
   ;; obj.field := val
-  (setf (slot-value obj (lisp-sym field-name)) val))
+  (let ((cl-field-name (lisp-sym field-name)))
+    (setf (slot-value obj cl-field-name) val)))
 
 (defmethod %append ((self %bag) (new-val %typed-value))
   ;(setf (lis self) (append (lis self) (list new-val)))
