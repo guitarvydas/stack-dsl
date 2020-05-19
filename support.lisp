@@ -1,5 +1,9 @@
 (in-package :stack-dsl)
 
+(defparameter *target-package* "CL-USER")
+
+(defun set-target-package (str)
+  (setf *target-package* str))
 
 ;; stack of typed values
 ;; 2 stacks for each type - "input" and "output"
@@ -131,7 +135,7 @@
   (assert (subtypep (type-of stack) '%typed-stack)))
 
 (defun lisp-sym (str)
-  (intern (string-upcase str) "CL-USER"))
+  (intern (string-upcase str) *target-package*))
 
 (defun %push-empty (stack)
   ;; push some sort of empty indicator onto the stack
@@ -196,12 +200,26 @@
   self)
 
 
+;; various accessors for built-in types
+
+(defmethod %list ((self %map))
+  (%ordered-list self))
+
+(defmethod %list ((self %bag))
+  (lis self))
+
+(defmethod %as-string ((self %string))
+  (%value self))
+
+(defmethod %as-string ((self %enum))
+  (%value self))
+
 ;;;; macros ;;;;
 
 
 ;;
 ;; There is no need to read the actual Lisp macros below.
-;; The macros, in effect, rewrite text into other text (over-simplicfication).
+;; The macros, in effect, rewrite text into other text (over-simplification).
 ;;
 ;; I list the effect of each macro, in loose terms, below...:
 

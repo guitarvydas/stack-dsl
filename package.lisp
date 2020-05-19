@@ -33,4 +33,9 @@
    #:~newscope     ;; push empty onto xxx stack
    #:~append       ;; set top(xxx-input) to append(xxx-input,top(output-other)), pop output-other, top(xxx-input) must be a :bag or a :map
    #:~set-field    ;; set top(xxx-input).field to top(output-other), pop output-other
+
+   #:set-target-package
+
+   #:%list
+   #:%as-string
    ))
