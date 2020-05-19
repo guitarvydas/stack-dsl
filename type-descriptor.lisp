@@ -89,7 +89,7 @@
   (let ((self-types (types self))
 	(obj-types (types obj)))
     (and (= (length self-types) (length obj-types))
-	 (every #'(lambda (x) (string-member x obj-types)) self-types))))
+	 (every #'(lambda (x) (field-member x obj-types)) self-types))))
 (defmethod deep-type-equal ((self structure-descriptor) (obj structure-descriptor))
   (let ((self-fields (fields self))
 	(obj-fields (fields obj)))

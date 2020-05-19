@@ -145,7 +145,7 @@
 (defmethod enumEmit ((self stack-dsl-parser))
   (let ((tyName (savedSymbol self)))
     (pasm:emit-string self "
-(defclass ~a (%enum) () (:default-initargs :%type \"~a\"))
+(defclass ~a (stack-dsl::%enum) () (:default-initargs :%type \"~a\"))
 "                tyName tyName)
   (pasm:emit-string self "
 (defmethod initialize-instance :after ((self ~a) &key &allow-other-keys)
