@@ -87,3 +87,6 @@
 (defclass structure-descriptor (type-descriptor)
   ((fields :accessor fields :initform nil :initarg :fields)))
 
+(defclass named-field ()
+  ((name :accessor name :initarg :name)
+   (ty   :accessor ty :initarg :ty)))

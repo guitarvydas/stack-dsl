@@ -36,12 +36,6 @@
 (defun make-type-from-string (s)
   s)
 
-#+nil(defun string-member (s lis)
-  ;; does this need to be more efficient?  (for small dsl's, we don't really care)
-  (dolist (str lis)
-    (when (string= str s)
-      (return-from string-member T)))
-  nil)
 
 (defun field-equal (field1 field2)
   (and (eql (car field1) (car field2))
