@@ -14,7 +14,7 @@
 				     (:file "generate" :depends-on ("stack-dsl.pasm"))))))
 
 (defsystem :stack-dsl/use
-  :depends-on (:stack-dsl)
+  :depends-on (:stack-dsl :cl-ppcre :loops)
   :around-compile (lambda (next)
                     (proclaim '(optimize (debug 3)
                                          (safety 3)
@@ -26,9 +26,11 @@
 				     (:file "type-descriptor")
 				     (:file "mechanisms")
 				     (:file "transpile")
+				     (:file "json-transpile")
 				     (:file "stack-dsl" 
 					    :depends-on ("support"
 							 "type-descriptor"
 							 "mechanisms"
-							 "transpile"))))))
+							 "transpile"
+							 "json-transpile"))))))
 
