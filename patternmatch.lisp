@@ -1,55 +1,79 @@
-(proclaim '(optimize (debug 3) (safety 3) (speed 0)))
+(in-package :stack-dsl)
 
 (defclass string-scanner ()
   ((text :accessor text :initarg :text)
-   (start :accessor start :initform 0)))
+   (start :accessor start :initform 0)
+   (previous-start :accessor previous-start :initform 0)
+   (out  :accessor out :initarg :out :initform *standard-output*)))
 
-(defun exprdsl (string-to-scan)
-  (let ((s (make-instance 'string-scanner :text string-to-scan)))
+(defmethod semit ((s string-scanner) format-string &rest format-args)
+  (apply 'format (out s) format-string format-args))
+
+(defmethod save-start ((s string-scanner))
+  (setf (previous-start s) (start s)))
+
+(defmethod get-accepted ((s string-scanner))
+  (subseq (text s) (previous-start s) (start s)))
+
+
+(defun exprdsl (string-to-scan &key (out *standard-output*))
+  (let ((s (make-instance 'string-scanner :text string-to-scan :out out)))
+    (semit s "[~%")
     (@:loop
+      (exprdslparser s)
       (@:exit-when (>= (start s) (1- (length (text s)))))
-      (exprdslparser s))))
+      (semit s ",~%"))
+    (semit s "~&]~%")))
 
 (defmethod exprdslparser ((s string-scanner))
     (let ((i (id s)))
+      (semit s "{ \"name\" : \"~a\" , " i)
+      (semit s "\"descriptor\" : ")
       (input s "\\=")
       (let ((r (cond ((look s "\\{") (classWithFields s))
 		     ((look s ":") (builtinType s))
 		     ((look s "'") (enumList s))
-		     ((look s "\\|") (compositeTypeList s)))))
-	(list i r))))
+		     ((look s "\\|") (compoundTypeList s)))))
+	(semit s "}"))))
+	
 
 (defmethod classWithFields ((s string-scanner))
   (input s "\\{")
-  (prog1 
-      (idList s)
-    (input s "\\}")))
+  (semit s "{ \"kind\" : \"structure\", \"fields\" : [")
+  (let ((flist (fieldIdList s)))
+    (input s "\\}")
+    (@:loop
+      (let ((f (pop flist)))
+	(semit s "~&{\"fieldName\":\"~a\",\"fieldType\":\"~a\"}" f f))
+      (@:exit-when (null flist))
+      (semit s ",")))
+  (semit s "]}"))
 
 (defmethod builtinType ((s string-scanner))
   (input s ":")
-  (cond ((match s "map")    (id s) "map")
-	((match s "bag")    (id s) "bag")
-	((match s "string")        "string")))
+  (semit s "{ \"kind\" : ")
+  (cond ((match s "map") (let ((i (id s))) (semit s "\"map\", \"elementType\" : \"~a\"" i)))
+	((match s "bag") (let ((i (id s))) (semit s "\"bag\", \"elementType\" : \"~a\"" i)))
+	((match s "string")                (semit s "\"string\"")))
+  (semit s " }"))
 
 (defmethod enumList ((s string-scanner))
-  (let ((c (enumConstant s)))
-    (cons c (enumTail s))))
+  (let ((elist (let ((c (enumConstant s)))
+		 (cons c (enumTail s)))))
+    (semit s "{ \"kind\" : \"enum\", \"valueList\" : [")
+    (@:loop
+      (let ((e (pop elist)))
+	(semit s "\"~a\"" e))
+      (@:exit-when (null elist))
+      (semit s ","))
+    (semit s "] }")))
+
+
 
 (defmethod enumTail ((s string-scanner))
   (cond ((match s "\\|")
 	 (let ((c (enumConstant s)))
 	   (cons c (enumTail s))))
-	(t nil)))
-
-(defmethod compositeTypeList ((s string-scanner))
-  (input s "\\|")
-  (let ((tyid (id s)))
-    (cons tyid (compositeTypeTail s))))
-
-(defmethod compositeTypeTail ((s string-scanner))
-  (cond ((match s "\\|") 
-         (let ((ty (id s)))
-           (cons ty (compositeTypeTail s))))
 	(t nil)))
 
 (defmethod enumConstant ((s string-scanner))
@@ -58,12 +82,35 @@
       (id s)
     (input s "'")))
 
-(defmethod idList ((s string-scanner))
-  (cond ((look s "\\w") (let ((id (id s))) (cons id (idList s))))
+(defmethod compoundTypeList ((s string-scanner))
+  (input s "\\|")
+  (semit s "{ \"kind\" : \"compound\", \"types\" : [")
+  (let ((tylist
+	 (let ((tyid (id s)))
+	   (cons tyid (compoundTypeTail s)))))
+    (@:loop
+      (let ((ty (pop tylist)))
+	(semit s "\"~a\"" ty)
+	(@:exit-when (null tylist))
+	(semit s ",")))
+    (semit s "] }")))
+
+(defmethod compoundTypeTail ((s string-scanner))
+  (cond ((match s "\\|") 
+         (let ((ty (id s)))
+           (cons ty (compoundTypeTail s))))
 	(t nil)))
 
+(defmethod idList ((s string-scanner))
+  (cond ((look s "\\w") (let ((i (id s))) (cons i (idList s))))
+	(t nil)))
+
+(defmethod fieldIdList ((s string-scanner))
+  (idList s))
+
 (defmethod id ((s string-scanner))
-  (input s "\\w+"))
+  (input s "\\w+")
+  (get-accepted s))
 
 (defmethod ws ((s string-scanner))
   (match s "[ \\t\\n\\r]+")
@@ -71,14 +118,15 @@
 
 
 (defmethod skip ((s string-scanner))
+  (save-start s)
   (multiple-value-bind (match-start match-end reg-start reg-ends)
       (cl-ppcre:scan "^[ \\t\\n\\r]+"
 		     (text s)
 		     :start (start s))
     (declare (ignore reg-start reg-ends))
     (when (and match-start (> match-end (start s)))
-	(setf (start s) match-end)
-	(format *standard-output* "~a" (subseq (text s) match-start match-end)))))
+	(setf (start s) match-end)))
+  (save-start s))
 
 (defmethod input ((s string-scanner) pattern-string)
   (skip s)
@@ -90,7 +138,6 @@
     (if (and match-start (> match-end (start s)))
 	(setf (start s) match-end)
 	(error (format nil "parse error expecting ~s but got ~s" pattern-string (subseq (text s) (start s) (min (length (text s)) (+ 10 (start s)))))))
-    (format *standard-output* "~a" (subseq (text s) match-start match-end))
     t))
 
 (defmethod look ((s string-scanner) pattern-string)
@@ -107,6 +154,8 @@
   (and (look s pattern) (input s pattern) t))
 
 
+
+
 (defun test ()
   (let ((str "
 expression = { ekind object }
@@ -116,6 +165,7 @@ fieldMap = :map field
 field = { name parameterList }
 parameterList =| nameMap
 nameMap = :map name
+junk = :bag name
 name = :string
 "
 	  ))
@@ -211,3 +261,72 @@ b = { name parameterList }
   (format *standard-output* "~&test11~%")
   (test11)
 )
+
+
+#| raw scanner, no emission
+(defun exprdsl (string-to-scan &key (out *standard-output*))
+  (let ((s (make-instance 'string-scanner :text string-to-scan :out out)))
+    (@:loop
+      (@:exit-when (>= (start s) (1- (length (text s)))))
+      (exprdslparser s))))
+
+(defmethod exprdslparser ((s string-scanner))
+    (let ((i (id s)))
+      (input s "\\=")
+      (let ((r (cond ((look s "\\{") (classWithFields s))
+		     ((look s ":") (builtinType s))
+		     ((look s "'") (enumList s))
+		     ((look s "\\|") (compoundTypeList s)))))
+	(list i r))))
+
+(defmethod classWithFields ((s string-scanner))
+  (input s "\\{")
+  (prog1 
+      (idList s)
+    (input s "\\}")))
+
+(defmethod builtinType ((s string-scanner))
+  (input s ":")
+  (cond ((match s "map")    (id s) "map")
+	((match s "bag")    (id s) "bag")
+	((match s "string")        "string")))
+
+(defmethod enumList ((s string-scanner))
+  (let ((c (enumConstant s)))
+    (cons c (enumTail s))))
+
+(defmethod enumTail ((s string-scanner))
+  (cond ((match s "\\|")
+	 (let ((c (enumConstant s)))
+	   (cons c (enumTail s))))
+	(t nil)))
+
+(defmethod compoundTypeList ((s string-scanner))
+  (input s "\\|")
+  (let ((tyid (id s)))
+    (cons tyid (compoundTypeTail s))))
+
+(defmethod compoundTypeTail ((s string-scanner))
+  (cond ((match s "\\|") 
+         (let ((ty (id s)))
+           (cons ty (compoundTypeTail s))))
+	(t nil)))
+
+(defmethod enumConstant ((s string-scanner))
+  (input s"'")
+  (prog1
+      (id s)
+    (input s "'")))
+
+(defmethod idList ((s string-scanner))
+  (cond ((look s "\\w") (let ((id (id s))) (cons id (idList s))))
+	(t nil)))
+
+(defmethod id ((s string-scanner))
+  (input s "\\w+"))
+
+(defmethod ws ((s string-scanner))
+  (match s "[ \\t\\n\\r]+")
+  nil)
+
+|#

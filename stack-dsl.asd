@@ -26,11 +26,14 @@
 				     (:file "type-descriptor")
 				     (:file "mechanisms")
 				     (:file "transpile")
-				     (:file "json-transpile")
+				     (:file "patternmatch")
+				     (:file "transpile-mechanisms" :depends-on ("patternmatch"))
 				     (:file "stack-dsl" 
 					    :depends-on ("support"
 							 "type-descriptor"
 							 "mechanisms"
 							 "transpile"
-							 "json-transpile"))))))
+							 "patternmatch"
+							 "transpile-mechanisms"
+							 ))))))
 
