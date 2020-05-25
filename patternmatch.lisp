@@ -7,8 +7,7 @@
 (defun exprdsl (string-to-scan)
   (let ((s (make-instance 'string-scanner :text string-to-scan)))
     (@:loop
-      (format *standard-output* "~&start = ~a~%" (start s))
-      (@:exit-when (= (length string-to-scan) (start s)))
+      (@:exit-when (>= (start s) (1- (length (text s)))))
       (exprdslparser s))))
 
 (defmethod exprdslparser ((s string-scanner))
@@ -28,9 +27,9 @@
 
 (defmethod builtinType ((s string-scanner))
   (input s ":")
-  (cond ((match s "map")    "map")
-	((match s "bag")    "bag")
-	((match s "string") "string")))
+  (cond ((match s "map")    (id s) "map")
+	((match s "bag")    (id s) "bag")
+	((match s "string")        "string")))
 
 (defmethod enumList ((s string-scanner))
   (let ((c (enumConstant s)))
@@ -164,21 +163,27 @@ name = :string
       (exprdslparser s))))
 	  
 (defun test8 ()
-  (let ((str "expression = :bag"))
+  (let ((str "expression = :bag x"))
     (let ((s (make-instance 'string-scanner :text str)))
       (exprdslparser s))))
 	  
 (defun test9 ()
-  (let ((str "expression = :map"))
+  (let ((str "expression = :map y"))
     (let ((s (make-instance 'string-scanner :text str)))
       (exprdslparser s))))
 	  
 (defun test10 ()
   (let ((str "expression = { ekind object }
 ekind = 'true' | 'false' | 'object'"))
-    (let ((s (make-instance 'string-scanner :text str)))
-      (exprdslparser s))))
+    (exprdsl str)))
 	  
+(defun test11 ()
+  (let ((str
+         "
+fieldMap = :map a
+b = { name parameterList }
+"))
+    (exprdsl str)))
 
 (defun testall ()
   (format *standard-output* "~&test1~%")
@@ -195,4 +200,14 @@ ekind = 'true' | 'false' | 'object'"))
   (test5)
   (format *standard-output* "~&test6~%")
   (test6)
+  (format *standard-output* "~&test7~%")
+  (test7)
+  (format *standard-output* "~&test8~%")
+  (test8)
+  (format *standard-output* "~&test9~%")
+  (test9)
+  (format *standard-output* "~&test10~%")
+  (test10)
+  (format *standard-output* "~&test11~%")
+  (test11)
 )
