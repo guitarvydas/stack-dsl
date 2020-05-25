@@ -19,7 +19,10 @@ builtinType :
       ]
       
 enumList :
-  [ ?'|' '|' >> cons @enumConstant @enumList
+  cons @enumConstant @enumTail
+  
+enumTail :
+  [ ?'|' '|' >> cons @enumConstant @enumTail
   | *        >> nil
   ]
 
