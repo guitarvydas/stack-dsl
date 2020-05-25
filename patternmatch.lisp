@@ -37,14 +37,20 @@
     (cons c (enumTail s))))
 
 (defmethod enumTail ((s string-scanner))
-  (cond ((match s "|")
+  (cond ((match s "\\|")
 	 (let ((c (enumConstant s)))
 	   (cons c (enumTail s))))
 	(t nil)))
 
 (defmethod compositeTypeList ((s string-scanner))
-  (cond ((id? s) (let ((ty (id s)))
-		   (cons ty (compositeTypeList s))))
+  (input s "\\|")
+  (let ((tyid (id s)))
+    (cons tyid (compositeTypeTail s))))
+
+(defmethod compositeTypeTail ((s string-scanner))
+  (cond ((match s "\\|") 
+         (let ((ty (id s)))
+           (cons ty (compositeTypeTail s))))
 	(t nil)))
 
 (defmethod enumConstant ((s string-scanner))
@@ -59,9 +65,6 @@
 
 (defmethod id ((s string-scanner))
   (input s "\\w+"))
-
-(defmethod id? ((s string-scanner))
-  (look s "\\w"))
 
 (defmethod ws ((s string-scanner))
   (match s "[ \\t\\n\\r]+")
@@ -88,7 +91,8 @@
     (if (and match-start (> match-end (start s)))
 	(setf (start s) match-end)
 	(error (format nil "parse error expecting ~s but got ~s" pattern-string (subseq (text s) (start s) (min (length (text s)) (+ 10 (start s)))))))
-(format *standard-output* "~a" (subseq (text s) match-start match-end))))
+    (format *standard-output* "~a" (subseq (text s) match-start match-end))
+    t))
 
 (defmethod look ((s string-scanner) pattern-string)
   (skip s)
@@ -101,7 +105,6 @@
 
 (defmethod match ((s string-scanner) pattern)
   (skip s)
-  (format *standard-output* "~&match ~a look(~s)=~a~%" (start s) pattern (look s pattern))
   (and (look s pattern) (input s pattern) t))
 
 
@@ -151,7 +154,7 @@ name = :string
       (exprdslparser s))))
 	  
 (defun test6 ()
-  (let ((str "parameterList =| nameMap | nameMap"))
+  (let ((str "parameterList =| a | b"))
     (let ((s (make-instance 'string-scanner :text str)))
       (exprdslparser s))))
 	  
@@ -176,3 +179,20 @@ ekind = 'true' | 'false' | 'object'"))
     (let ((s (make-instance 'string-scanner :text str)))
       (exprdslparser s))))
 	  
+
+(defun testall ()
+  (format *standard-output* "~&test1~%")
+  (test1)
+  (format *standard-output* "~&test2~%")
+  (test2)
+  (format *standard-output* "~&test3~%")
+  (test3)
+  (format *standard-output* "~&test4~%")
+  (test4)
+  (format *standard-output* "~&test4a~%")
+  (test4a)
+  (format *standard-output* "~&test5~%")
+  (test5)
+  (format *standard-output* "~&test6~%")
+  (test6)
+)

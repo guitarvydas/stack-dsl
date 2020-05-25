@@ -27,8 +27,11 @@ enumTail :
   ]
 
 compositeTypeList :
-  [ &id? ty = @id '|'
-         >> cons ty @compositeTypeList
+  cons @id @compositeTypeTail
+
+compositeTypeTail :
+  [ ?'|' '|'
+         >> cons @id @compositeTypeList
   | *    >> nil
   ]
 
