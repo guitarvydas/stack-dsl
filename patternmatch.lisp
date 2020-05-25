@@ -13,18 +13,18 @@
 
 (defmethod exprdslparser ((s string-scanner))
     (let ((i (id s)))
-      (input s "=")
-      (let ((r (cond ((look s "{") (classWithFields s))
+      (input s "\\=")
+      (let ((r (cond ((look s "\\{") (classWithFields s))
 		     ((look s ":") (builtinType s))
 		     ((look s "'") (enumList s))
 		     ((look s "\\|") (compositeTypeList s)))))
 	(list i r))))
 
 (defmethod classWithFields ((s string-scanner))
-  (input s "{")
+  (input s "\\{")
   (prog1 
       (idList s)
-    (input s "}")))
+    (input s "\\}")))
 
 (defmethod builtinType ((s string-scanner))
   (input s ":")
@@ -74,7 +74,7 @@
 		     (text s)
 		     :start (start s))
     (declare (ignore reg-start reg-ends))
-    (when match-start
+    (when (and match-start (> match-end (start s)))
 	(setf (start s) match-end)
 	(format *standard-output* "~a" (subseq (text s) match-start match-end)))))
 
@@ -85,7 +85,7 @@
 		     (text s)
 		     :start (start s))
     (declare (ignore reg-start reg-ends))
-    (if match-start
+    (if (and match-start (> match-end (start s)))
 	(setf (start s) match-end)
 	(error (format nil "parse error expecting ~s but got ~s" pattern-string (subseq (text s) (start s) (min (length (text s)) (+ 10 (start s)))))))
 (format *standard-output* "~a" (subseq (text s) match-start match-end))))
@@ -97,7 +97,7 @@
 		     (text s)
 		     :start (start s))
     (declare (ignore match-end reg-start reg-ends))
-    (and match-start (> match-start (start s)))))
+    match-start))
 
 (defmethod match ((s string-scanner) pattern)
   (skip s)
@@ -136,6 +136,11 @@ name = :string
       s)))
 	  
 (defun test4 ()
+  (let ((str "expression={ekind object}"))
+    (let ((s (make-instance 'string-scanner :text str)))
+      (exprdslparser s))))
+	  
+(defun test4a ()
   (let ((str "expression = { ekind object }"))
     (let ((s (make-instance 'string-scanner :text str)))
       (exprdslparser s))))
