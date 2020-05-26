@@ -5,7 +5,7 @@
 (defun transpile-stack ( infile-name 
 			target-package-name1 outfile-name
 			jsonfile-name
-			target-package-name2 mechanisms-filename)
+			target-package-name2 target-package-name3 mechanisms-filename)
   ;; transpile a stack description in infile
   ;; to an output file of .lisp
 (format *standard-output* "~&in stack-dsl~%")  
@@ -23,7 +23,7 @@
 	    (exprdsl in-string :out jf)
 	    (format nil "file ~a written" jsonfile-name))
 	  (with-open-file (m mechanisms-filename :direction :output :if-exists :supersede :if-does-not-exist :create)
-	    (m-exprdsl in-string :out m :pkg target-package-name2)
+	    (m-exprdsl in-string :out m :pkg target-package-name2 :slots-pkg target-package-name3)
 	    (format nil "file ~a written" mechanisms-filename))
 	  )))))
 

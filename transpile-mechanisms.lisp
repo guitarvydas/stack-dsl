@@ -3,48 +3,50 @@
 
 ;; code templates
 (defparameter *pkg* "CL-USER")
+(defparameter *slots-pkg* "CL-USER")
 
 (defmethod template-newscope ((s string-scanner) name)
   (semit s "(defmethod $~a__NewScope ((p parser))~%" name)
-  (semit s "  (stack-dsl:%push-empty (~a::input-~a (env p))))~%~%" *pkg* name))
+  (semit s "  (stack-dsl:%push-empty (~a::input-~a (env p))))~%~%" *slots-pkg* name))
 
 (defmethod template-output ((s string-scanner) name)
   (semit s "(defmethod $~a__Output ((p parser))~%" name)
-  (semit s "  (stack-dsl:%output (~a::output-~a (env p)) (~a::input-~a (env p)))~%" *pkg* name *pkg* name)
-  (semit s "  (stack-dsl:%pop (~a::input-~a (env p))))~%~%" *pkg* name))
+  (semit s "  (stack-dsl:%output (~a::output-~a (env p)) (~a::input-~a (env p)))~%" *slots-pkg* name *slots-pkg* name)
+  (semit s "  (stack-dsl:%pop (~a::input-~a (env p))))~%~%" *slots-pkg* name))
 
 (defmethod template-coerce ((s string-scanner) to from)
   (semit s "(defmethod $~a__CoerceFrom_~a ((p parser))~%" to from)
-  (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *pkg* from)
+  (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *slots-pkg* from)
   (semit s "   (stack-dsl:%ensure-type \"~a\" val)~%" to)
-  (semit s "   (stack-dsl:%push (~a::input-~a (env p)) val)~%" *pkg* to)
-  (semit s "   (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *pkg* from))
+  (semit s "   (stack-dsl:%push (~a::input-~a (env p)) val)~%" *slots-pkg* to)
+  (semit s "   (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *slots-pkg* from))
 
 (defmethod template-append ((s string-scanner) to from)
   (semit s "(defmethod $~a__AppendFrom_~a ((p parser))~%" to from)
-  (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *pkg* from) 
-  (semit s "    (stack-dsl:%ensure-appendable-type (~a::input-~a (env p)))~%" *pkg* to) 
+  (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *slots-pkg* from) 
+  (semit s "    (stack-dsl:%ensure-appendable-type (~a::input-~a (env p)))~%" *slots-pkg* to) 
   (semit s "    (stack-dsl:%ensure-type (stack-dsl:%element-type 
 			     (stack-dsl:%top (~a::input-~a (env p))))
-			    val)~%" *pkg* to)
-  (semit s "    (stack-dsl::%append (stack-dsl:%top (~a::input-~a (env p))) val)~%"  *pkg* to)
-  (semit s "    (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *pkg* from)) 
+			    val)~%" *slots-pkg* to)
+  (semit s "    (stack-dsl::%append (stack-dsl:%top (~a::input-~a (env p))) val)~%"  *slots-pkg* to)
+  (semit s "    (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *slots-pkg* from)) 
 
 (defmethod template-set-field ((s string-scanner) to to-field from)
   (semit s "(defmethod $~a__setField_~a_from_~a ((p parser))~%" to to-field from)
-  (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *pkg* from)
+  (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *slots-pkg* from)
   (semit s "    (stack-dsl:%ensure-field-type \"~a\" \"~a\" val)~%" to to-field)
-  (semit s "    (stack-dsl:%set-field (stack-dsl:%top (~a::input-~a (env p))) \"~a\" val)~%" *pkg* to to-field)
-  (semit s "    (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *pkg* from))
+  (semit s "    (stack-dsl:%set-field (stack-dsl:%top (~a::input-~a (env p))) \"~a\" val)~%" *slots-pkg* to to-field)
+  (semit s "    (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *slots-pkg* from))
 
 (defmethod template-set-enum ((s string-scanner) to val)
-  (semit s "(defmethod $~__SetEnum_~a ((p parser))~%" to val)
-  (semit s "  (setf (stack-dsl:%value (stack-dsl:%top (~a::input-~a (env p)))) \"~a\"))~%~%" *pkg* to val))
+  (semit s "(defmethod $~a__SetEnum_~a ((p parser))~%" to val)
+  (semit s "  (setf (stack-dsl:%value (stack-dsl:%top (~a::input-~a (env p)))) \"~a\"))~%~%" *slots-pkg* to val))
 
 
 
-(defun m-exprdsl (string-to-scan &key (out *standard-output*) (pkg "CL-USER"))
+(defun m-exprdsl (string-to-scan &key (out *standard-output*) (pkg "CL-USER") (slots-pkg "CL-USER"))
   (setf *pkg* pkg)
+  (setf *slots-pkg* slots-pkg)
   (let ((s (make-instance 'string-scanner :text string-to-scan :out out)))
     (semit s "(in-package ~s)~%~%" *pkg*)
     (@:loop
