@@ -2,11 +2,11 @@
 
 
 ;; code templates
-(defparameter *pkg* "arrowgrams/esa-transpiler")
+(defparameter *pkg* "CL-USER")
 
 (defmethod template-newscope ((s string-scanner) name)
   (semit s "(defmethod $~a__NewScope ((p parser))~%" name)
-  (semit s "  stack-dsl:%push-empty (~a::input-~a (env p)))~%~%" *pkg* name))
+  (semit s "  (stack-dsl:%push-empty (~a::input-~a (env p))))~%~%" *pkg* name))
 
 (defmethod template-output ((s string-scanner) name)
   (semit s "(defmethod $~a__Output ((p parser))~%" name)
@@ -43,9 +43,10 @@
 
 
 
-(defun m-exprdsl (string-to-scan &key (out *standard-output*))
+(defun m-exprdsl (string-to-scan &key (out *standard-output*) (pkg "CL-USER"))
+  (setf *pkg* pkg)
   (let ((s (make-instance 'string-scanner :text string-to-scan :out out)))
-    (semit s "(in-package ~a)~%~%" *pkg*)
+    (semit s "(in-package ~s)~%~%" *pkg*)
     (@:loop
       (@:exit-when (>= (start s) (1- (length (text s)))))
       (m-exprdslparser s))))
