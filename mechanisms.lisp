@@ -116,7 +116,7 @@
   (pasm:emit-string self "(defmethod initialize-instance :after ((self %map-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%element-type self) \"%map\"))")
   (pasm:emit-string self "(defmethod initialize-instance :after ((self %bag-stack) &key &allow-other-keys)~%  (setf (stack-dsl::%element-type self) \"%bag\"))")
   (pasm:emit-string self "~%(defclass environment ()~%((%water-mark :accessor %water-mark :initform nil)~%")
-  (map-existence-list (cons "%map" (cons "%bag" (existence-list self)
+  (map-existence-list (existence-list self)
     #'(lambda (tyName)
       (pasm:emit-string self "(input-~a :accessor input-~a :initform (make-instance '~a-stack))~%" tyName tyName tyName)
       (pasm:emit-string self "(output-~a :accessor output-~a :initform (make-instance '~a-stack))~%" tyName tyName tyName)))
@@ -137,7 +137,7 @@
 	 (incf counter)
 	 (pasm:emit-string self "(eq (nth ~a wm) (output-~a self))~%" counter tyName)
 	 (incf counter)))
-  (pasm:emit-string self "))~%(error \"stack depth incorrect\")))~%")))))
+  (pasm:emit-string self "))~%(error \"stack depth incorrect\")))~%")))
 
 
 (defmethod enumPushNew ((self stack-dsl-parser))
