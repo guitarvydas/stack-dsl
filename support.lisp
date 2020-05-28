@@ -72,9 +72,25 @@
       (deep-type-equal expected-type-desc obj-desc))))
 
 (defmethod %ensure-appendable-type ((obj T))
-  (%type-check-failure-format "type ~a must be a %typed-stack, but is not"
+  (%type-check-failure-format "type ~a must be a bag or a map, but is not"
 			      obj))
-(defmethod %ensure-appendable-type ((stack %typed-stack))
+
+(defmethod %ensure-appendable-type ((obj %bag))
+  T)
+
+(defmethod %ensure-appendable-type ((obj %map))
+  T)
+
+(defmethod %ensure-appendable-type ((collection-type STRING))
+  (let ((type-desc collection-type))
+    (if (or (eq (type-of type-desc) 'map-descriptor)
+	    (eq (type-of type-desc) 'bag-descriptor))
+	:ok
+	(%type-check-failure-format "type ~a is expected to be a bag or a map"
+				    (%element-type stack))))
+  T)
+
+#+nil(defmethod %ensure-appendable-type ((stack %typed-stack))
   (let ((type-desc (lookup-type-or-fail (%element-type stack))))
     (if (or (eq (type-of type-desc) 'map-descriptor)
 	    (eq (type-of type-desc) 'bag-descriptor))
