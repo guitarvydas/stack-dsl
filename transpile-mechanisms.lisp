@@ -24,12 +24,11 @@
 (defmethod template-append ((s string-scanner) to from)
   (semit s "(defmethod $~a__AppendFrom_~a ((p parser))~%" to from)
   (semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *slots-pkg* from) 
-  (semit s "    (stack-dsl:%ensure-appendable-type (~a::input-~a (env p)))~%" *slots-pkg* to) 
-  (semit s "    (stack-dsl:%ensure-type (stack-dsl:%element-type 
-			     (stack-dsl:%top (~a::input-~a (env p))))
-			    val)~%" *slots-pkg* to)
-  (semit s "    (stack-dsl::%append (stack-dsl:%top (~a::input-~a (env p))) val)~%"  *slots-pkg* to)
-  (semit s "    (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *slots-pkg* from)) 
+  (semit s "    (let ((dest (stack-dsl:%top (~a::input-~a (env p)))))~%" *slots-pkg* to) 
+  (semit s "      (stack-dsl:%ensure-appendable-type dest)~%")
+  (semit s "      (stack-dsl:%ensure-type (stack-dsl:%element-type dest) val)~%")
+  (semit s "      (stack-dsl::%append dest val)~%")
+  (semit s "      (stack-dsl:%pop (~a::output-~a (env p))))))~%~%" *slots-pkg* from)) 
 
 (defmethod template-set-field ((s string-scanner) to to-field from)
   (semit s "(defmethod $~a__setField_~a_from_~a ((p parser))~%" to to-field from)
