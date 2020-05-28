@@ -39,7 +39,7 @@
     (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyName)
     (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
     (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
-    (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyName)))
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" element-type-Name)))
 
 (defmethod mapEmit ((self stack-dsl-parser))
   (let ((element-type-name (scanner:token-text (pasm:accepted-token self)))
@@ -49,7 +49,7 @@
     (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyName)
     (pasm:emit-string self "(defclass ~a-stack(stack-dsl::%typed-stack) ())~%" tyName)
     (pasm:emit-string self " (defmethod initialize-instance :after ((self ~a-stack) &key &allow-other-keys)~%" tyName)
-    (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" tyname)))
+    (pasm:emit-string self "(setf (stack-dsl::%element-type self) \"~a\"))~%" element-type-name)))
 
 (defmethod compoundPushNew ((self stack-dsl-parser)) (setf (compound-list self) nil))
 (defmethod compoundAddSymbol ((self stack-dsl-parser)) 
