@@ -26,13 +26,17 @@
 				     (:file "type-descriptor")
 				     (:file "mechanisms")
 				     (:file "transpile")
+				     (:file "pattern-matching-primitives")
 				     (:file "patternmatch")
-				     (:file "transpile-mechanisms" :depends-on ("patternmatch"))
+				     (:file "transpile-mechanisms" 
+					    :depends-on ("patternmatch"
+							 "pattern-matching-primitives"))
 				     (:file "stack-dsl" 
 					    :depends-on ("support"
 							 "type-descriptor"
 							 "mechanisms"
 							 "transpile"
+							 "pattern-matching-primitives"
 							 "patternmatch"
 							 "transpile-mechanisms"
 							 ))))))

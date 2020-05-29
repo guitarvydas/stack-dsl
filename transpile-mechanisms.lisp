@@ -5,6 +5,10 @@
 (defparameter *pkg* "CL-USER")
 (defparameter *slots-pkg* "CL-USER")
 
+;;;
+;; emission templates
+;;;
+
 (defmethod template-newscope ((s string-scanner) name)
   (semit s "(defmethod $~a__NewScope ((p parser))~%" name)
   (semit s "  (stack-dsl:%push-empty (~a::input-~a (env p))))~%~%" *slots-pkg* name))
@@ -42,6 +46,9 @@
   (semit s "  (setf (stack-dsl:%value (stack-dsl:%top (~a::input-~a (env p)))) \"~a\"))~%~%" *slots-pkg* to val))
 
 
+;;;
+;; parsing (aka pattern matching)
+;;;
 
 (defun m-exprdsl (string-to-scan &key (out *standard-output*) (pkg "CL-USER") (slots-pkg "CL-USER"))
   (setf *pkg* pkg)
@@ -123,7 +130,9 @@
   nil)
 
 
-
+;;;
+;; alpha tests
+;;;
 
 (defun m-test ()
   (let ((str "
