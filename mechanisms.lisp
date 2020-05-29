@@ -6,8 +6,11 @@
     r))
 
 ;; mechanisms
-(defmethod errorTail ((self stack-dsl-parser)) (error "tail error"))
-(defmethod errorColonTail ((self stack-dsl-parser)) (error "colon tail error"))
+(defmethod errorTail ((self stack-dsl-parser)) 
+  (let ((atoken (pasm:accepted-token self))
+	(ntoken (pasm:next-token self)))
+    (error "Stack DSL: tail error accepted=~a next=~a" atoken ntoken)))
+(defmethod errorColonTail ((self stack-dsl-parser)) (error "Stack DSL: colon tail error"))
 
 (defmethod nullEmit ((self stack-dsl-parser))
   (let ((tyname (savedSymbol self)))
