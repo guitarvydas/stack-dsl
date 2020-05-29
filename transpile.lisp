@@ -8,7 +8,7 @@
 			target-package-name2 target-package-name3 mechanisms-filename)
   ;; transpile a stack description in infile
   ;; to an output file of .lisp
-(format *standard-output* "~&in stack-dsl~%")  
+(format *standard-output* "~&in stack-dsl ~a ~a~%" pasm:*pasm-tracing* pasm:*pasm-accept-tracing*)  
   (let ((in-string (alexandria:read-file-into-string infile-name)))
     (let ((tokens (scanner:scanner in-string)))
       (let ((p (make-instance 'stack-dsl-parser)))
