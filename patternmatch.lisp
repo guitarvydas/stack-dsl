@@ -1,5 +1,9 @@
 (in-package :stack-dsl)
 
+(defmethod id ((s string-scanner))
+  (pm-input s "\\w+")
+  (pm-get-accepted s))
+
 
 
 (defun exprdsl (string-to-scan &key (out *standard-output*))
@@ -16,11 +20,11 @@
       (pm-semit s "{ \"name\" : \"~a\" , " i)
       (pm-semit s "\"descriptor\" : ")
       (pm-input s "\\=")
-      (let ((r (cond ((pm-look s "\\{") (classWithFields s))
-		     ((pm-look s ":") (builtinType s))
-		     ((pm-look s "'") (enumList s))
-		     ((pm-look s "\\|") (compoundTypeList s)))))
-	(pm-semit s "}"))))
+      (cond ((pm-look s "\\{") (classWithFields s))
+	    ((pm-look s ":") (builtinType s))
+	    ((pm-look s "'") (enumList s))
+	    ((pm-look s "\\|") (compoundTypeList s)))
+	(pm-semit s "}")))
 	
 
 (defmethod classWithFields ((s string-scanner))
@@ -93,10 +97,6 @@
 
 (defmethod fieldIdList ((s string-scanner))
   (idList s))
-
-(defmethod id ((s string-scanner))
-  (pm-input s "\\w+")
-  (pm-get-accepted s))
 
 (defmethod ws ((s string-scanner))
   (pm-match s "[ \\t\\n\\r]+")

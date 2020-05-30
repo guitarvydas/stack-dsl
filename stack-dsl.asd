@@ -27,7 +27,8 @@
 				     (:file "mechanisms")
 				     (:file "transpile")
 				     (:file "pattern-matching-primitives")
-				     (:file "patternmatch")
+				     (:file "patternmatch"
+					    :depends-on ("pattern-matching-primitives"))
 				     (:file "transpile-mechanisms" 
 					    :depends-on ("patternmatch"
 							 "pattern-matching-primitives"))

@@ -198,7 +198,7 @@
 
 (defmethod valid-field-p ((self structure-descriptor) (other-field STRING))
     (let ((self-types (fields self)))
-      (some #'(lambda (x) (string= x other-type)) self-types)))
+      (some #'(lambda (x) (string= x other-field)) self-types)))
   
 (defmethod same-fields-p ((self structure-descriptor) (obj structure-descriptor))
   (let ((self-fields (fields self))
@@ -226,4 +226,4 @@
   (cond ((null self-values)
 	 (null other-values))
 	(t (and (string= (car self-values) (car other-values))
-		(every-enumerated-value-same-p (cdr self-value) (cdr other-values))))))
+		(every-enumerated-value-same-p (cdr self-values) (cdr other-values))))))
