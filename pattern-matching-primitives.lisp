@@ -15,14 +15,18 @@
 (defmethod pm-get-accepted ((s string-scanner))
   (subseq (text s) (previous-start s) (start s)))
 
-(defmethod pm-skip ((s string-scanner))
+(defmethod pm-skip-many ((s string-scanner))
   (multiple-value-bind (match-start match-end reg-start reg-ends)
       (cl-ppcre:scan "^([ \\t\\n\\r]+|%.*[\\n\\r])"
 		     (text s)
 		     :start (start s))
     (declare (ignore reg-start reg-ends))
     (when (and match-start (> match-end (start s)))
-	(setf (start s) match-end)))
+      (setf (start s) match-end)
+      (pm-skip-many s))))
+    
+(defmethod pm-skip ((s string-scanner))
+  (pm-skip-many s)
   (pm-save-start s))
 
 (defmethod pm-input ((s string-scanner) pattern-string)
