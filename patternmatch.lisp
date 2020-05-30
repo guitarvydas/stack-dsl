@@ -42,9 +42,14 @@
 (defmethod builtinType ((s string-scanner))
   (pm-input s ":")
   (pm-semit s "{ \"kind\" : ")
-  (cond ((pm-match) s "map") (let ((i (id s))) (pm-semit s "\"map\", \"elementType\" : \"~a\"" i))
-	((pm-match) s "bag") (let ((i (id s))) (pm-semit s "\"bag\", \"elementType\" : \"~a\"" i))
-	((pm-match) s "string")                (pm-semit s "\"string\""))
+  (cond ((pm-match s "map")
+	 (let ((i (id s))) 
+	   (pm-semit s "\"map\", \"elementType\" : \"~a\"" i)))
+	((pm-match s "bag")
+	 (let ((i (id s))) 
+	   (pm-semit s "\"bag\", \"elementType\" : \"~a\"" i)))
+	((pm-match s "string")
+	 (pm-semit s "\"string\"")))
   (pm-semit s " }"))
 
 (defmethod enumList ((s string-scanner))
@@ -61,10 +66,10 @@
 
 
 (defmethod enumTail ((s string-scanner))
-  (cond ((pm-match) s "\\|")
+  (cond ((pm-match s "\\|")
 	 (let ((c (enumConstant s)))
 	   (cons c (enumTail s))))
-	(t nil))
+	(t nil)))
 
 (defmethod enumConstant ((s string-scanner))
   (pm-input s"'")
@@ -86,10 +91,10 @@
     (pm-semit s "] }")))
 
 (defmethod compoundTypeTail ((s string-scanner))
-  (cond ((pm-match) s "\\|") 
+  (cond ((pm-match s "\\|") 
          (let ((ty (id s)))
-           (cons ty (compoundTypeTail s)))
-	 (t nil)))
+           (cons ty (compoundTypeTail s))))
+	(t nil)))
 
 (defmethod idList ((s string-scanner))
   (cond ((pm-look s "\\w") (let ((i (id s))) (cons i (idList s))))
