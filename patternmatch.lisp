@@ -4,13 +4,16 @@
   (pm-input s "\\w+")
   (pm-get-accepted s))
 
+(defmethod id-look ((s string-scanner))
+  (pm-look s "\\w+"))
 
 
 (defun exprdsl (string-to-scan &key (out *standard-output*))
   (let ((s (make-instance 'string-scanner :text string-to-scan :out out)))
     (pm-semit s "[~%")
     (@:loop
-      (exprdslparser s)
+      (when (id-look s)
+        (exprdslparser s))
       (@:exit-when (>= (start s) (1- (length (text s)))))
       (pm-semit s ",~%"))
     (pm-semit s "~&]~%")))

@@ -56,7 +56,8 @@
     (pm-semit s "(in-package ~s)~%~%" *pkg*)
     (@:loop
       (@:exit-when (>= (start s) (1- (length (text s)))))
-      (m-exprdslparser s))))
+      (when (m-id-look s)
+        (m-exprdslparser s)))))
 
 (defmethod m-exprdslparser ((s string-scanner))
     (let ((i (id s)))
@@ -123,6 +124,9 @@
 
 (defmethod m-id ((s string-scanner))
   (pm-input s "\\w+"))
+
+(defmethod m-id-look ((s string-scanner))
+  (pm-look s "\\w+"))
 
 (defmethod m-ws ((s string-scanner))
   (pm-match s "[ \\t\\n\\r]+")
