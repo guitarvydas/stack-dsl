@@ -16,7 +16,6 @@
   (subseq (text s) (previous-start s) (start s)))
 
 (defmethod pm-skip ((s string-scanner))
-  (pm-save-start s)
   (multiple-value-bind (match-start match-end reg-start reg-ends)
       (cl-ppcre:scan "^([ \\t\\n\\r]+|%.*[\\n\\r])"
 		     (text s)
