@@ -57,6 +57,7 @@
     (@:loop
       (@:exit-when (>= (start s) (1- (length (text s)))))
       (when (m-id-look s)
+	;; TODO: this will fail if "" at end of file...
         (m-exprdslparser s)))))
 
 (defmethod m-exprdslparser ((s string-scanner))
