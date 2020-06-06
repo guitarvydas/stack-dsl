@@ -27,6 +27,7 @@
    #:%get-field
    #:%append
    #:%value
+   #:%ordered-list
 
    ;; macros for using the environment stacks
    #:~output       ;; move top(xxx-input) to top(xxx-output), pop xxx
