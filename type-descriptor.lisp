@@ -149,11 +149,7 @@
 (defun initialize-types (filename)
   (setf *type-table* (types-as-alist filename))
   (setf *type-hash* (make-hash-table :test 'equal))
-  (initialize-type-hash *type-hash* *type-table*)
-  (maphash #'(lambda (k v)
-	       (format *standard-output* "~&type ~s ~s~%" k v))
-	   *type-hash*))
-
+  (initialize-type-hash *type-hash* *type-table*))
 
 (defmethod valid-enum-tag-p (not-enum val)
   (declare (ignore not-enum val))
