@@ -213,7 +213,7 @@
 
 (defmethod %append ((self %bag) (new-val %typed-value))
   ;(setf (lis self) (append (lis self) (list new-val)))
-  (push new-val (lis self))
+  (pushnew new-val (lis self))
   self)
 
 (defmethod %append ((self %map) (new-val %typed-value))
