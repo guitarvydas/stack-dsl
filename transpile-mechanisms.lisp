@@ -21,7 +21,7 @@
   (pm-semit s "(defmethod $~a__CoerceFrom_~a ((p parser))~%" to from)
   (pm-semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *slots-pkg* from)
   (pm-semit s "   (stack-dsl:%ensure-type \"~a\" val)~%" to)
-  (pm-semit s "   (stack-dsl:%push (~a::input-~a (env p)) val)~%" *slots-pkg* to)
+  (pm-semit s "   (stack-dsl:%set-top (~a::input-~a (env p)) val)~%" *slots-pkg* to)
   (pm-semit s "   (stack-dsl:%pop (~a::output-~a (env p)))))~%~%" *slots-pkg* from))
 
 (defmethod template-append ((s string-scanner) to from)

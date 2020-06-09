@@ -184,6 +184,11 @@
   (push v (%stack stack))
   stack)
 
+(defun %set-top (stack v)
+  (assert (subtypep (type-of stack) '%typed-stack))
+  (setf (first (%stack stack)) v)
+  stack)
+
 (defun %top (stack)
   (when (null stack)
     (error "internal error 3: stack is empty"))

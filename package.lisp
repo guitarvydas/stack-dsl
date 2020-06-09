@@ -17,6 +17,7 @@
    #:%output
    #:%pop
    #:%top
+   #:%set-top
    #:%push-empty
    #:%push
    #:%check-type
