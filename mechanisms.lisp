@@ -131,6 +131,15 @@
        (pasm:emit-string self "(stack-dsl::%stack (input-~a self))~%" tyName)
        (pasm:emit-string self "(stack-dsl::%stack (output-~a self))~%" tyName)))
   (pasm:emit-string self ")))~%~%")  
+
+  (pasm:emit-string self "~%(defparameter *stacks* '(~%")
+  (map-existence-list 
+   (existence-list self)
+   #'(lambda (tyName)
+       (pasm:emit-string self "input-~a~%" tyName)
+       (pasm:emit-string self "output-~a~%" tyName)))
+  (pasm:emit-string self "))~%~%")  
+
   (pasm:emit-string self "(defmethod %memoCheck ((self environment))~%(let ((wm (%water-mark self)))~%")
   (let ((counter 0))
     (pasm:emit-string self "(let ((r (and~%")
