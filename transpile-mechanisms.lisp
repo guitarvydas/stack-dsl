@@ -34,7 +34,7 @@
   (pm-semit s "      (stack-dsl:%pop (~a::output-~a (env p))))))~%~%" *slots-pkg* from)) 
 
 (defmethod template-set-field ((s string-scanner) to to-field from)
-  (pm-semit s "(defmethod $~a__setField_~a_from_~a ((p parser))~%" to to-field from)
+  (pm-semit s "(defmethod $~a__SetField_~a_from_~a ((p parser))~%" to to-field from)
   (pm-semit s "  (let ((val (stack-dsl:%top (~a::output-~a (env p)))))~%" *slots-pkg* from)
   (pm-semit s "    (stack-dsl:%ensure-field-type \"~a\" \"~a\" val)~%" to to-field)
   (pm-semit s "    (stack-dsl:%set-field (stack-dsl:%top (~a::input-~a (env p))) \"~a\" val)~%" *slots-pkg* to to-field)
