@@ -315,3 +315,9 @@
 
 ;;;;;; end macros
 
+(defun %make-empty-map (typename)
+  (make-instance '%map :%element-type typename))
+
+(defmethod %empty-p ((self %map))
+  (null (%ordered-list self)))
+

@@ -8,6 +8,7 @@
    #:%string
    #:%value
    #:%stack
+   #:%map
    
    #:initialize-types
    #:%ensure-type
@@ -30,6 +31,9 @@
    #:%value
    #:%ordered-list
 
+   #:%make-empty-map
+   #:%empty-p
+   
    ;; macros for using the environment stacks
    #:~output       ;; move top(xxx-input) to top(xxx-output), pop xxx
    #:~newscope     ;; push empty onto xxx stack
