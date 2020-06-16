@@ -321,3 +321,7 @@
 (defmethod %empty-p ((self %map))
   (null (%ordered-list self)))
 
+(defmethod %empty-p ((self %typed-value))
+  (eq :no-value (%value self)))
+
+
