@@ -31,14 +31,16 @@
   
 
 ;; all items must be %typed-value or %typed-struct or %typed-stack or %bag or %map or %string
-(defclass %typed-value ()
+(defclass %stack-dsl-type () () )
+
+(defclass %typed-value (%stack-dsl-type)
   ((%type :accessor %type :initform :no-type :initarg :%type)
    (%value   :accessor %value   :initform :no-value)))
 
 (defclass %compound-type (%typed-value)
   ((%type-list :accessor %type-list :initform nil :initarg :%type-list)))
   
-(defclass %typed-stack ()
+(defclass %typed-stack (%stack-dsl-type)
   ((%element-type :accessor %element-type :initform :no-type :initarg :%element-type)
    (%stack :accessor %stack :initform nil)))
 
