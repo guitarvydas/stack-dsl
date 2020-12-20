@@ -86,8 +86,7 @@
     (if (or (eq (type-of type-desc) 'map-descriptor)
 	    (eq (type-of type-desc) 'bag-descriptor))
 	:ok
-	(%type-check-failure-format "type ~a is expected to be a bag or a map"
-				    (%element-type stack))))
+	(%type-check-failure-format "type STRING is expected to be a bag or a map")))
   T)
 
 #+nil(defmethod %ensure-appendable-type ((stack %typed-stack))
