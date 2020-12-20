@@ -1,7 +1,9 @@
 (in-package "STACK-DSL")
+(proclaim '(optimize (debug 3) (safety 3) (speed 0)))
+
 
 (defmethod stack-language ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "stack-language") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "stack-language")
 (pasm::pasm-filter-stream p #'rmSpaces)
 (pasm:call-external p #'headerEmit)
 (loop
@@ -21,10 +23,10 @@
 (pasm:input p :EOF)
 (pasm:call-external p #'existenceEmit)
 (pasm:call-external p #'environmentEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod rmSpaces ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "rmSpaces") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "rmSpaces")
 (cond
 ((pasm:parser-success? (pasm:lookahead? p :SPACE)))
 ((pasm:parser-success? (pasm:lookahead? p :COMMENT)))
@@ -32,10 +34,10 @@
 )
 )
 
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod dsl-tail ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "dsl-tail") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "dsl-tail")
 (cond
 ((pasm:parser-success? (pasm:lookahead-char? p #\{))(pasm:call-rule p #'classWithFields)
 )
@@ -49,10 +51,10 @@
 )
 )
 
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod colonTail ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "colonTail") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "colonTail")
 (pasm:input-char p #\:)
 (cond
 ((pasm:parser-success? (pasm:lookahead-symbol? p "bag"))(pasm:call-rule p #'bagDef)
@@ -67,19 +69,19 @@
 )
 )
 
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod classWithFields ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "classWithFields") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "classWithFields")
 (pasm:input-char p #\{)
 (pasm:call-external p #'fieldClear)
 (pasm:call-rule p #'fieldDefs)
 (pasm:input-char p #\})
 (pasm:call-external p #'fieldEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod compoundClass ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "compoundClass") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "compoundClass")
 (pasm:input-char p #\|)
 (pasm:call-external p #'compoundPushNew)
 (pasm:input p :SYMBOL)
@@ -99,36 +101,36 @@
 )
 
 (pasm:call-external p #'compoundEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod bagDef ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "bagDef") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "bagDef")
 (pasm:input-symbol p "bag")
 (pasm:input p :SYMBOL)
 (pasm:call-external p #'bagEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod mapDef ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "mapDef") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "mapDef")
 (pasm:input-symbol p "map")
 (pasm:input p :SYMBOL)
 (pasm:call-external p #'mapEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod stringDef ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "stringDef") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "stringDef")
 (pasm:input-symbol p "string")
 (pasm:call-external p #'stringEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod nullDef ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "nullDef") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "nullDef")
 (pasm:input-symbol p "null")
 (pasm:call-external p #'nullEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod fieldDefs ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "fieldDefs") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "fieldDefs")
 (pasm:call-rule p #'field)
 (loop
 (cond
@@ -140,18 +142,18 @@
 
 )
 
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod field ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "field") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "field")
 (pasm:input p :SYMBOL)
 (pasm:call-external p #'fieldPushNew)
 (pasm:call-external p #'existenceTypeSave)
 (pasm:call-rule p #'optionalInitializer)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod optionalInitializer ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "optionalInitializer") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "optionalInitializer")
 (cond
 ((pasm:parser-success? (pasm:lookahead-char? p #\=))(pasm:input-char p #\=)
 (pasm:input-char p #\')
@@ -162,10 +164,10 @@
 ( t )
 )
 
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod enumTail ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "enumTail") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "enumTail")
 (pasm:call-external p #'enumPushNew)
 (pasm:call-rule p #'constant)
 (loop
@@ -180,13 +182,13 @@
 )
 
 (pasm:call-external p #'enumEmit)
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 
 (defmethod constant ((p pasm:parser))
-  (let ((prev-rule (pasm:current-rule p)))     (setf (pasm:current-rule p) "constant") (pasm::p-into-trace p)
+     (setf (pasm:current-rule p) "constant")
 (pasm:input-char p #\')
 (pasm:input p :SYMBOL)
 (pasm:call-external p #'enumPushSymbol)
 (pasm:input-char p #\')
-(setf (pasm:current-rule p) prev-rule) (pasm::p-return-trace p)))
+)
 

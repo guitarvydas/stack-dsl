@@ -225,6 +225,11 @@
 (defmethod %list ((self %map))
   (%ordered-list self))
 
+(defmethod %copy-list ((self %map))
+  (let ((new (make-instance '%map :%element-type (%element-type self))))
+    (setf (%ordered-list new) (%ordered-list self))
+    new))
+
 (defmethod %list ((self %bag))
   (lis self))
 

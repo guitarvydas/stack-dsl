@@ -43,5 +43,6 @@
    #:set-target-package
 
    #:%list
+   #:%copy-list
    #:%as-string
    ))
