@@ -28,7 +28,6 @@
    #:%set-field
    #:%get-field
    #:%append
-   #:%value
    #:%ordered-list
 
    #:%make-empty-map
@@ -43,5 +42,11 @@
    #:set-target-package
 
    #:%list
+   #:%copy-list
    #:%as-string
+
+   #:tolower
+   #:make-map-from-list
+   #:make-typed-value
+   #:make-typed-string
    ))

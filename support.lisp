@@ -225,6 +225,11 @@
 (defmethod %list ((self %map))
   (%ordered-list self))
 
+(defmethod %copy-list ((self %map))
+  (let ((new (make-instance '%map :%element-type (%element-type self))))
+    (setf (%ordered-list new) (%ordered-list self))
+    new))
+
 (defmethod %list ((self %bag))
   (lis self))
 
@@ -326,4 +331,19 @@
 (defmethod %empty-p ((self %typed-value))
   (eq :no-value (%value self)))
 
+
+
+(defun make-map-from-list (ty lis)
+  (let ((map (make-instance 'stack-dsl::%map :%element-type ty :%ordered-list lis)))
+    map))
+
+(defmethod tolower ((self %string)) 
+  (let ((r (make-instance '%string :%value (string-downcase (%value self)))))
+    r))
+
+(defun make-typed-value (ty val)
+  (make-instance '%typed-value :%type ty :%value val))
+
+(defmethod make-typed-string ((s string))
+  (make-typed-value %string s))
 

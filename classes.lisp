@@ -35,7 +35,7 @@
 
 (defclass %typed-value (%stack-dsl-type)
   ((%type :accessor %type :initform :no-type :initarg :%type)
-   (%value   :accessor %value   :initform :no-value)))
+   (%value   :accessor %value :initform :no-value :initarg :%value)))
 
 (defclass %compound-type (%typed-value)
   ((%type-list :accessor %type-list :initform nil :initarg :%type-list)))
@@ -50,7 +50,7 @@
 
 (defclass %map (%typed-value)
   ((%element-type :accessor %element-type :initform :no-type :initarg :%element-type)
-   (%ordered-list :accessor %ordered-list :initform nil)))
+   (%ordered-list :accessor %ordered-list :initform nil :initarg :%ordered-list)))
 
 (defclass %string (%typed-value)
   ()
