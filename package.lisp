@@ -10,6 +10,8 @@
    #:%stack
    #:%map
    
+   #:%typed-value
+
    #:initialize-types
    #:%ensure-type
    #:%ensure-field-type
