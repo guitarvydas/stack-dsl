@@ -19,7 +19,6 @@
 ;; applicable to :bag or :map
 ;; for :bag, we don't care about order of items
 ;; for :map, items must be indexable
-(defgeneric %append (self val))
 
 (defun %ensure-existence (class-symbol)
   (let ((c (find-class class-symbol)))
@@ -219,6 +218,11 @@
   (setf (%ordered-list self) (append (%ordered-list self) (list new-val)))
   self)
 
+(defmethod %append ((self (eql nil)) (new-val %typed-value))
+  (let ((m (make-instance '%map)))
+    (setf (%ordered-list m) (list new-val))
+    m))
+
 
 ;; various accessors for built-in types
 
@@ -345,5 +349,9 @@
   (make-instance '%typed-value :%type ty :%value val))
 
 (defmethod make-typed-string ((s string))
-  (make-typed-value %string s))
+  (make-instance '%string :%value s))
 
+
+
+(defmethod %ordered-list ((s (eql nil)))
+  nil)
