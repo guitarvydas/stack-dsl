@@ -51,4 +51,6 @@
    #:make-map-from-list
    #:make-typed-value
    #:make-typed-string
+
+   #:domap
    ))

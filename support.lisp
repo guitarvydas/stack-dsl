@@ -218,10 +218,6 @@
   (setf (%ordered-list self) (append (%ordered-list self) (list new-val)))
   self)
 
-(defmethod %append ((self (eql nil)) (new-val %typed-value))
-  (let ((m (make-instance '%map)))
-    (setf (%ordered-list m) (list new-val))
-    m))
 
 
 ;; various accessors for built-in types
@@ -353,5 +349,8 @@
 
 
 
-(defmethod %ordered-list ((s (eql nil)))
-  nil)
+(defmacro domap (pair body)
+  (let ((var (first pair))
+	(lis (second pair)))
+    `(cl:dolist (,var (%list ,lis))
+       ,@body)))
