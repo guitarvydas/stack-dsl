@@ -349,8 +349,5 @@
 
 
 
-(defmacro domap (pair body)
-  (let ((var (first pair))
-	(lis (second pair)))
-    `(cl:dolist (,var (%list ,lis))
-       ,@body)))
+(defmacro domap (pair &body body)
+    `(cl:dolist (,(first pair) (stack-dsl:%list ,(second pair))) ,@body))
